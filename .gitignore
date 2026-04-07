@@ -1,0 +1,8 @@
+# Python
+.idea
+__pycache__
+
+# DVC/artifacts
+/artifacts/**
+!/artifacts/**/
+!/artifacts/**/*.dvc
