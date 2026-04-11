@@ -1,0 +1,16 @@
+services:
+  workspace:
+    image: object-detection:latest
+    build:
+      context: .
+      dockerfile: docker/object-detection.dockerfile
+    container_name: object-detection
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    shm_size: "8gb"
+    gpus: all
+    volumes:
+      - .:/workspace
+      - /disk/datasets:/disk/datasets:ro
+    command: sleep infinity
