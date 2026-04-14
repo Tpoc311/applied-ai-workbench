@@ -4,13 +4,15 @@ services:
     build:
       context: .
       dockerfile: docker/object-detection.dockerfile
+      args:
+        USERNAME: ${USER}
+        PASSWORD: ${PASSWORD}
     container_name: object-detection
-    working_dir: /workspace
-    stdin_open: true
-    tty: true
     shm_size: "8gb"
     gpus: all
     volumes:
-      - .:/workspace
+      - .:/home/${USER}/applied-ai-workbench/tasks/object-detection
       - /disk/datasets:/disk/datasets:ro
-    command: sleep infinity
+    ports:
+      - "8000:22"
+    restart: always
