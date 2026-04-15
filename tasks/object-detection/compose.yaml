@@ -12,7 +12,7 @@ services:
     gpus: all
     volumes:
       - .:/home/${USER}/applied-ai-workbench/tasks/object-detection
-      - /disk/datasets:/disk/datasets:ro
+      - /home/${USER}/github/applied-ai-workbench/artifacts:/home/${USER}/applied-ai-workbench/tasks/object-detection/artifacts:ro
     ports:
       - "8000:22"
     restart: always

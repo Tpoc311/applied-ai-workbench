@@ -3,10 +3,10 @@
 ## Start/stop service
 
 ```bash
-docker compose up -d --build
-docker compose exec workspace bash
+docker compose -f tasks/object-detection/compose.yaml up -d --build
+docker compose -f tasks/object-detection/compose.yaml exec workspace bash
 ```
 
 ```bash
-docker compose down
+docker compose -f tasks/object-detection/compose.yaml down
 ```
