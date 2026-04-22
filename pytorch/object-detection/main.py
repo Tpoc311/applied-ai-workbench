@@ -1,10 +1,10 @@
 import torch
 import torchvision
-from tqdm import tqdm
 from torch.utils.data import DataLoader, Subset
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+from tqdm import tqdm
 
-from dataset.dataset import KITTIDataset
+from src.dataset import KITTIDataset
 
 
 def collate_fn(batch):
@@ -54,30 +54,18 @@ def main():
     base_dataset = KITTIDataset(root=root)
     dataset_size = len(base_dataset)
 
-    val_size = int(0.2 * dataset_size)
+    train_size = int(0.8 * dataset_size)
     indices = torch.randperm(
         dataset_size,
         generator=torch.Generator().manual_seed(42)
     ).tolist()
 
-    val_indices = indices[:val_size]
-    train_indices = indices[val_size:]
-
+    train_indices = indices[:train_size]
     train_dataset = Subset(KITTIDataset(root=root), train_indices)
-    val_dataset = Subset(KITTIDataset(root=root), val_indices)
-
     train_loader = DataLoader(
         train_dataset,
         batch_size=8,
         shuffle=True,
-        num_workers=4,
-        collate_fn=collate_fn,
-    )
-
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=1,
-        shuffle=False,
         num_workers=4,
         collate_fn=collate_fn,
     )

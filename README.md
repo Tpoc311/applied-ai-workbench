@@ -27,5 +27,6 @@ The structure of this repository will evolve over time as new tasks and projects
 ```text
 .
 ├── artifacts/  # large files and experiment-related assets
-├── docs/       # contains supplementary documentation, notes, and setup-related materials 
+├── docs/       # contains supplementary documentation, notes, and setup-related materials
+├── pytorch/    # contains docker image of PyTorch workspace for different CV-tasks
 └── README.md   # repository overview
