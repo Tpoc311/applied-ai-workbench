@@ -1,4 +1,6 @@
-# Object detection
+# Pytorch workspace
+
+A docker workspace for using PyTorch to learn and solve various problems.
 
 ## Start/stop service
 
