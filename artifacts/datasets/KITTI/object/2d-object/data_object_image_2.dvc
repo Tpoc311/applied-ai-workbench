@@ -1,0 +1,6 @@
+outs:
+- md5: dd56418b2b9b380bf03d7aef5b8a5bf9.dir
+  size: 12571374362
+  nfiles: 22483
+  hash: md5
+  path: data_object_image_2

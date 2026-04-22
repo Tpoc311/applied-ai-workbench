@@ -1,0 +1,18 @@
+services:
+  pytorch-workspace:
+    image: pytorch-workspace:latest
+    build:
+      context: .
+      dockerfile: docker/pytorch-workspace.dockerfile
+      args:
+        USERNAME: ${USER}
+        PASSWORD: ${PASSWORD}
+    container_name: pytorch-workspace
+    shm_size: "8gb"
+    gpus: all
+    volumes:
+      - .:/home/${USER}/applied-ai-workbench/pytorch
+      - /home/${USER}/github/applied-ai-workbench/artifacts:/home/${USER}/applied-ai-workbench/artifacts:ro
+    ports:
+      - "8002:22"
+    restart: always
