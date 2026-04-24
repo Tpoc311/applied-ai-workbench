@@ -1,5 +1,11 @@
 # Local DVC setup
 
+## Install DVC
+
+```bash
+pip3 install dvc==3.67.1
+```
+
 ## Configure remote
 
 ```bash
