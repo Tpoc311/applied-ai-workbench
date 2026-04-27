@@ -1,0 +1,5 @@
+outs:
+- md5: 54386661197f13bc54a5b5d19eaa6e3d
+  size: 253237
+  hash: md5
+  path: simple-net_cifar10_epoch15_batch32_lr0.002_momentum0.9.pt
