@@ -4,6 +4,8 @@ A simple example of CNN from PyTorch tutorial.
 
 ## Train
 
+Simple CNN from PyTorch tutorial:
+
 ```bash
 python3 pytorch/image_classification/train_simple_cnn.py \
   --batch_size 32 \
@@ -12,7 +14,19 @@ python3 pytorch/image_classification/train_simple_cnn.py \
   --lr 0.002
 ```
 
+AlexNet:
+
+```bash
+python3 pytorch/image_classification/train_alexnet.py \
+  --batch_size 256 \
+  --num_workers 4 \
+  --epochs 50 \
+  --lr 0.001
+```
+
 ## Test
+
+Simple CNN from PyTorch tutorial:
 
 ```bash
 python3 pytorch/image_classification/test_simple_cnn.py \
