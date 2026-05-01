@@ -36,7 +36,7 @@ def main() -> None:
     """
     args = parse_args()
 
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
     trainloader, _ = create_train_dataloader(args.data_root, args.batch_size, args.num_workers)

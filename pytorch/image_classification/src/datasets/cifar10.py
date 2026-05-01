@@ -1,10 +1,11 @@
+from torch import float32
+
 from torch.utils.data import DataLoader
-from torchvision import transforms
 from torchvision.datasets import CIFAR10
-from torchvision.transforms.transforms import ToTensor, Normalize
+from torchvision.transforms.v2 import ToImage, ToDtype, Normalize, Compose
 
 
-def get_transforms() -> transforms.Compose:
+def get_transforms() -> Compose:
     """
     Return simple preprocessing transforms for CIFAR-10.
 
@@ -13,7 +14,10 @@ def get_transforms() -> transforms.Compose:
 
     :return: Composed transformation sequence ready to be applied to dataset.
     """
-    return transforms.Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    return Compose([ToImage(),
+                    ToDtype(float32, scale=True),
+                    Normalize(mean=(0.49139968, 0.48215827, 0.44653124),
+                              std=(0.24703224, 0.24348514, 0.26158786))])
 
 
 def create_train_dataloader(data_root: str, batch_size: int, num_workers: int) -> tuple[DataLoader, int]:
