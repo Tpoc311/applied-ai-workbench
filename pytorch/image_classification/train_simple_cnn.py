@@ -21,8 +21,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--save_model_path', type=str, default=".")
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--num_workers', type=int, default=4)
-    parser.add_argument('--epochs', type=int, default=20)
-    parser.add_argument('--lr', type=float, default=0.001)
+    parser.add_argument('--epochs', type=int, default=15)
+    parser.add_argument('--lr', type=float, default=0.002)
     parser.add_argument('--momentum', type=float, default=0.9)
     return parser.parse_args()
 
