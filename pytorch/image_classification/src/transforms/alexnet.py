@@ -3,8 +3,7 @@ from torchvision.transforms.v2 import Resize, RandomCrop, RandomHorizontalFlip, 
 
 
 def get_train_transforms() -> Compose:
-    """
-    Create a Compose of transforms for the training stage.
+    """Create a Compose of transforms for the training stage.
 
     :return: A Compose object with resizing, random cropping, dtype conversion, and normalization ready for validation.
     """
@@ -21,8 +20,7 @@ def get_train_transforms() -> Compose:
 
 
 def get_val_transforms() -> Compose:
-    """
-    Create a Compose of transforms for the validation stage.
+    """Create a Compose of transforms for the validation stage.
 
     :return: A Compose object with resizing, cropping, dtype conversion, and normalization ready for validation.
     """

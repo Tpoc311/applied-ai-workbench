@@ -6,8 +6,7 @@ from torchvision.transforms.v2 import ToImage, ToDtype, Normalize, Compose
 
 
 def get_transforms() -> Compose:
-    """
-    Return simple preprocessing transforms for CIFAR-10.
+    """Return simple preprocessing transforms for CIFAR-10.
 
     The pipeline converts input images to tensors and normalizes pixel values
     to the [-1, 1] range.
@@ -21,8 +20,7 @@ def get_transforms() -> Compose:
 
 
 def create_train_dataloader(data_root: str, batch_size: int, num_workers: int) -> tuple[DataLoader, int]:
-    """
-    Create a DataLoader for the CIFAR-10 train split.
+    """Create a DataLoader for the CIFAR-10 train split.
 
     :param data_root: Root directory where the CIFAR-10 dataset is stored.
     :param batch_size: Number of samples per batch.
@@ -34,8 +32,7 @@ def create_train_dataloader(data_root: str, batch_size: int, num_workers: int) -
 
 
 def create_test_dataloader(data_root: str, batch_size: int, num_workers: int) -> tuple[DataLoader, int]:
-    """
-    Create a DataLoader for the CIFAR-10 test split.
+    """Create a DataLoader for the CIFAR-10 test split.
 
     :param data_root: Root directory where the CIFAR-10 dataset is stored.
     :param batch_size: Number of samples per batch.

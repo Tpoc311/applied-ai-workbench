@@ -3,8 +3,7 @@ import torchvision
 
 
 def decode_image(path: str) -> torch.Tensor:
-    """
-    PyTorch's decode_image wrapper, which read images even if they are in grayscale or RGBA format.
+    """PyTorch's decode_image wrapper, which read images even if they are in grayscale or RGBA format.
 
     :param path: Path to image.
     :return: Image in torch.Tensor form.

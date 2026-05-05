@@ -7,8 +7,7 @@ from src.models.simple_net import Net
 
 
 def parse_args() -> argparse.Namespace:
-    """
-    Parse command-line arguments for the evaluation script.
+    """Parse command-line arguments for the evaluation script.
 
     :return: Parsed arguments namespace containing data paths and batch settings.
     """
@@ -21,8 +20,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """
-    Evaluate the trained model on the CIFAR-10 test dataset.
+    """Evaluate the trained model on the CIFAR-10 test dataset.
 
     Loads model weights, computes predictions without gradient tracking,
     and prints the final top-1 accuracy.

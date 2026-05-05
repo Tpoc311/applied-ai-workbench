@@ -11,8 +11,7 @@ from src.models.simple_net import Net
 
 
 def parse_args() -> argparse.Namespace:
-    """
-    Parse command-line arguments for the training script.
+    """Parse command-line arguments for the training script.
 
     :return: Parsed arguments namespace containing training hyperparameters.
     """
@@ -28,8 +27,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """
-    Train the CNN on CIFAR-10 and save the final model checkpoint.
+    """Train the CNN on CIFAR-10 and save the final model checkpoint.
 
     Iterates over the training set for a specified number of epochs,
     computes loss, updates weights via SGD, and prints epoch statistics.
