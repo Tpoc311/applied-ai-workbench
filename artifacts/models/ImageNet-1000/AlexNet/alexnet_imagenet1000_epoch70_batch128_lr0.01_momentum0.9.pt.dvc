@@ -1,0 +1,5 @@
+outs:
+- md5: 0da5eabd3da7ff0d95a7ea59e2159810
+  size: 244411113
+  hash: md5
+  path: alexnet_imagenet1000_epoch70_batch128_lr0.01_momentum0.9.pt
