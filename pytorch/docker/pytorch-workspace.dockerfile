@@ -4,6 +4,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
        python3-venv git curl openssh-server screen  \
     && rm -rf /var/lib/apt/lists/*
 
+RUN printf '%s\n' \
+    'defutf8 on' \
+    'utf8 on' \
+    'term screen-256color' \
+    'defscrollback 100000' \
+    >> /etc/screenrc
+
 RUN python3 -m venv --system-site-packages /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
