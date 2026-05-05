@@ -16,7 +16,7 @@ dvc remote modify --local applied-ai-workbench url ssh://<ADDRESS>:<PATH>
 
 ```bash
 dvc remote modify --local applied-ai-workbench user <LOGIN>
-dvc remote modify --local applied-ai-workbench password <PASSWORD
+dvc remote modify --local applied-ai-workbench password <PASSWORD>
 ```
 
 ## Clean removed files from remote
