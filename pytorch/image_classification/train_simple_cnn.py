@@ -1,6 +1,7 @@
 import argparse
 from os.path import join
 from time import time
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
@@ -45,10 +46,13 @@ def main() -> None:
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=args.momentum)
 
-    start_time = time()
+    total_start_time = time()
     for epoch in range(1, args.epochs + 1):
+        start_time = time()
         running_loss = 0.0
-        for i, data in enumerate(trainloader, start=1):
+
+        pbar = tqdm(enumerate(trainloader, start=1), total=len(trainloader), desc=f"Epoch {epoch}")
+        for i, data in pbar:
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
             outputs = net(inputs)
@@ -56,9 +60,8 @@ def main() -> None:
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
-        print(f'{epoch}, loss: {running_loss / i:.3f}')
-    end_time = time()
-    print('Finished Training. Total time elapsed: {0:.3f} minutes'.format((end_time - start_time) / 60))
+        tqdm.write(f"{epoch}, loss: {running_loss / i:.3f}, took minutes: {round((time() - start_time) / 60, ndigits=2)}")
+    tqdm.write(f"Finished Training. Total time elapsed: {round((time() - total_start_time) / 60, ndigits=2)} minutes")
 
     model_name = f"simple-net_cifar10_epoch{epoch}_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
     torch.save(net.state_dict(), join(args.save_model_path, model_name))
