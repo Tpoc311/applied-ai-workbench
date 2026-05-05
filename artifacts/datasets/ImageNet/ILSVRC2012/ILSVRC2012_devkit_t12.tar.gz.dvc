@@ -1,0 +1,5 @@
+outs:
+- md5: fa75699e90414af021442c21a62c3abf
+  size: 2568145
+  hash: md5
+  path: ILSVRC2012_devkit_t12.tar.gz

@@ -1,0 +1,5 @@
+outs:
+- md5: 1d675b47d978889d74fa0da5fadfb00e
+  size: 147897477120
+  hash: md5
+  path: ILSVRC2012_img_train.tar
