@@ -74,6 +74,9 @@ def main():
 
     with open("ILSVRC2012_val_images.txt", "w") as f:
         for model_name in sorted(os.listdir(args.models_dir)):
+            if model_name.split(".")[-1] != "pt":
+                continue
+
             model_path = join(args.models_dir, model_name)
 
             net = AlexNet()
