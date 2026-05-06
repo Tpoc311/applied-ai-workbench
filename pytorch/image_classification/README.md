@@ -95,7 +95,7 @@ python3 pytorch/image_classification/test_alexnet.py \
 Best validation accuracy: <b>0.5571</b> at epoch 70. After the main improvement phase, validation accuracy mostly
 plateaued around <b>0.554–0.557</b>.
 
-Training process hardware above took around <b>20 minutes</b> oer epoch and <b>30 hours</b> for all 90 epochs.
+Training process hardware above took around <b>20 minutes</b> per epoch and <b>30 hours</b> for all 90 epochs.
 
 This was not a strict historical reproduction of the original 2012 AlexNet paper.
 I used the torchvision implementation and focused on understanding the architecture, tensor flow, and the full training
