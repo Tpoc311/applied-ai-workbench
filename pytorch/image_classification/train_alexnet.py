@@ -1,6 +1,7 @@
 from argparse import ArgumentParser, Namespace
 from os.path import join
 
+import mlflow
 import torch
 from torch import nn, optim
 from torch.optim.lr_scheduler import MultiStepLR
@@ -27,6 +28,8 @@ def parse_args() -> Namespace:
     parser.add_argument('--lr', type=float, default=0.01)
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--weight_decay', type=float, default=0.0005)
+    parser.add_argument('--mlflow_address', type=str, default="http://host.docker.internal:8081")
+    parser.add_argument('--experiment_name', type=str, default="ImageNet1000")
     return parser.parse_args()
 
 
@@ -109,6 +112,16 @@ def main():
     """
     args = parse_args()
 
+    # MLflow setup
+    mlflow.set_tracking_uri(args.mlflow_address)
+    mlflow_params = {
+        "batch_size": args.batch_size,
+        "epochs": args.epochs,
+        "lr": args.lr,
+        "momentum": args.momentum,
+        "weight_decay": args.weight_decay,
+    }
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
@@ -131,22 +144,35 @@ def main():
         gamma=(1 / 250) ** (1 / 3),
     )
 
-    for epoch in range(1, args.epochs + 1):
-        train_loss, train_acc = train_loop(trainloader, net, criterion, optimizer, device, epoch)
-        val_loss, val_acc = val_loop(valloader, net, criterion, device, epoch)
+    mlflow.set_experiment(args.experiment_name)
 
-        scheduler.step()
-        current_lr = optimizer.param_groups[0]["lr"]
+    with mlflow.start_run(run_name=net.__class__.__name__):
+        mlflow.log_params(mlflow_params)
+        best_model_name = f"alexnet_imagenet1000_best_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
+        best_val_acc = float("-inf")
+        for epoch in range(1, args.epochs + 1):
+            train_loss, train_acc = train_loop(trainloader, net, criterion, optimizer, device, epoch)
+            val_loss, val_acc = val_loop(valloader, net, criterion, device, epoch)
 
-        tqdm.write(
-            f"epoch={epoch:03d}, "
-            f"train_loss={train_loss:.4f}, train_acc={train_acc:.4f}, "
-            f"val_loss={val_loss:.4f}, val_acc={val_acc:.4f}, "
-            f"lr={current_lr:.6f}"
-        )
+            scheduler.step()
+            current_lr = optimizer.param_groups[0]["lr"]
 
-        model_name = f"alexnet_imagenet1000_epoch{epoch}_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
-        torch.save(net.state_dict(), join(args.save_model_path, model_name))
+            mlflow.log_metrics(
+                {
+                    "train_loss": train_loss,
+                    "train_acc": train_acc,
+                    "val_loss": val_loss,
+                    "val_acc": val_acc,
+                    "lr": current_lr,
+                },
+                step=epoch,
+            )
+
+            if val_acc > best_val_acc:
+                best_val_acc = val_acc
+                torch.save(net.state_dict(), join(args.save_model_path, best_model_name))
+                mlflow.log_artifact(join(args.save_model_path, best_model_name))
+                tqdm.write(f"New best model: epoch={epoch}, val_acc={val_acc:.4f}")
     print(f"Finished Training")
 
 
