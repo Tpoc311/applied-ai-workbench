@@ -3,12 +3,12 @@ from argparse import ArgumentParser, Namespace
 from os.path import join
 
 import torch
-from torch import nn
+from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageNet
-from torchvision.models import AlexNet
 from tqdm import tqdm
 
+from src.models.imagenet1000 import models_dict
 from src.transforms.alexnet import get_val_transforms
 from src.utils import decode_image
 
@@ -20,6 +20,7 @@ def parse_args() -> Namespace:
     """
     parser = ArgumentParser()
     parser.add_argument('--data_root', type=str, default="artifacts/datasets/ImageNet/ILSVRC2012")
+    parser.add_argument('--model', type=str, help="Model architecture to use.", required=True)
     parser.add_argument('--models_dir', type=str)
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--num_workers', type=int, default=4)
@@ -27,7 +28,7 @@ def parse_args() -> Namespace:
 
 
 def val_loop(dataloader, model, loss_fn, device):
-    """Run the validation loop for the AlexNet model.
+    """Run the validation loop for the model.
 
     :param dataloader: DataLoader yielding validation batches (images, labels).
     :param model: Pre-trained neural network to evaluate.
@@ -60,7 +61,7 @@ def val_loop(dataloader, model, loss_fn, device):
 def main():
     """Parse arguments, load the validation dataset, and evaluate all saved models.
 
-     Iterates over model checkpoints in the specified directory, loads each AlexNet,
+     Iterates over model checkpoints in the specified directory, loads each model,
      computes validation loss and accuracy on ImageNet, and writes results to a file.
      """
     args = parse_args()
@@ -77,18 +78,16 @@ def main():
             if model_name.split(".")[-1] != "pt":
                 continue
 
-            model_path = join(args.models_dir, model_name)
-
-            net = AlexNet()
-            state_dict = torch.load(model_path, map_location=device)
-            net.load_state_dict(state_dict)
+            net = models_dict[args.model]()
+            checkpoint = torch.load(join(args.models_dir, model_name), map_location=device)
+            net.load_state_dict(checkpoint["model_state_dict"])
             net.to(device)
 
-            criterion = nn.CrossEntropyLoss()
+            criterion = CrossEntropyLoss()
             val_loss, val_acc = val_loop(valloader, net, criterion, device)
 
             f.write(f"model: {model_name}, val_loss={val_loss:.4f}, val_acc={val_acc:.4f}.\n")
-            tqdm.write(f"model: {model_name}, val_loss={val_loss:.4f}, val_acc={val_acc:.4f}.\n")
+            tqdm.write(f"model: {model_name}, epoch: {checkpoint["epoch"]}, val_loss={val_loss:.4f}, val_acc={val_acc:.4f}.\n")
     tqdm.write(f"Finished Testing")
 
 

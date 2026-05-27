@@ -8,9 +8,9 @@ from torch.optim import Optimizer, SGD
 from torch.optim.lr_scheduler import LRScheduler, MultiStepLR
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageNet
-from torchvision.models import AlexNet, resnet18, resnet34, resnet50, resnet101, resnet152
 from tqdm import tqdm
 
+from src.models.imagenet1000 import models_dict
 from src.transforms.alexnet import get_train_transforms, get_val_transforms
 from src.utils import decode_image
 
@@ -124,15 +124,6 @@ def main():
     iterates over epochs with train/val phases, logs metrics, and saves
     checkpoints after each epoch.
     """
-    models_dict = {
-        "AlexNet": AlexNet,
-        "ResNet18": resnet18,
-        "ResNet34": resnet34,
-        "ResNet50": resnet50,
-        "ResNet101": resnet101,
-        "ResNet152": resnet152,
-    }
-
     args = parse_args()
 
     # MLflow setup
@@ -189,8 +180,8 @@ def main():
     mlflow.set_experiment(args.experiment_name)
     with mlflow.start_run(run_name=args.model):
         mlflow.log_params(mlflow_params)
-        best_model_name = f"{args.model}_imagenet1000_best_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
-        last_model_name = f"{args.model}_imagenet1000_last_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
+        best_model_name = f"{args.model.lower()}_imagenet1000_best_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
+        last_model_name = f"{args.model.lower()}_imagenet1000_last_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
         for epoch in range(start_epoch, args.epochs + 1):
             train_loss, train_top1_acc, train_top5_acc = train_loop(trainloader, net, criterion, optimizer, device,
                                                                     epoch)

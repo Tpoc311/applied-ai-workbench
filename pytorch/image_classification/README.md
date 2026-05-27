@@ -49,13 +49,13 @@ optimization process itself still felt more like a black box.
 
 Here I did not tune hyperparameters properly and simply kept the checkpoint with the lowest loss after 20 epochs.
 
-## AlexNet (torchvision implementation)
+## ImageNet1000
 
 This experiment was my second step after the simplest CNN baseline and studying the LeNet (1998) architecture.
 
 ### Goal
 
-Understand a classic large-scale CNN architecture and verify that I can train it myself on ImageNet.
+Understand a classic large-scale CNN architecture and train it myself on ImageNet.
 
 ### Hardware used
 
@@ -69,31 +69,35 @@ I used my PC with the next hardware for training:
 
 ### What I did
 
-* Studied the AlexNet architecture and its tensor flow.
-* Used `torchvision.models.AlexNet` as an architecture.
+* Studied the AlexNet and ResNet architectures and its tensor flow.
+* Used `torchvision`implementations to train.
 * Built a train/validation pipeline for ImageNet-1000.
 * Implemented preprocessing, training loop, validation loop, metrics logging, and LR scheduling.
 * Implemented test script which counts accuracy of prediction on validation set.
 
 ### Train
 
-Default training configuration is defined directly in the script arguments.
+Default training configuration is defined directly in the script arguments. Models available for training are presented
+in `src/models/imagenet1000.py` in `models_dict`.
 
 ```bash
-python3 pytorch/image_classification/train_alexnet.py
+python3 pytorch/image_classification/train_imagenet1000.py \
+  --model ResNet18
 ```
 
 Resume training example:
 
 ```bash
-python3 pytorch/image_classification/train_alexnet.py \
-  --resume_from alexnet_imagenet1000_best_batch128_lr0.01_momentum0.9.pt
+python3 pytorch/image_classification/train_imagenet1000.py \
+  --model AlexNet \
+  --resume_from artifacts/models/ImageNet-1000/AlexNet/alexnet_imagenet1000_best_batch128_lr0.01_momentum0.9.pt
 ```
 
 ### Test
 
 ```bash
-python3 pytorch/image_classification/test_alexnet.py \
+python3 pytorch/image_classification/test_imagenet1000.py \
+  --model AlexNet \
   --models_dir artifacts/models/ImageNet-1000/AlexNet
 ```
 
