@@ -83,6 +83,13 @@ Default training configuration is defined directly in the script arguments.
 python3 pytorch/image_classification/train_alexnet.py
 ```
 
+Resume training example:
+
+```bash
+python3 pytorch/image_classification/train_alexnet.py \
+  --resume_from alexnet_imagenet1000_best_batch128_lr0.01_momentum0.9.pt
+```
+
 ### Test
 
 ```bash
