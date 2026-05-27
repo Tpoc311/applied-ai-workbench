@@ -3,12 +3,12 @@ from os.path import join
 
 import mlflow
 import torch
-from torch.nn import CrossEntropyLoss
+from torch.nn import Module, CrossEntropyLoss
 from torch.optim import Optimizer, SGD
 from torch.optim.lr_scheduler import LRScheduler, MultiStepLR
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageNet
-from torchvision.models import AlexNet
+from torchvision.models import AlexNet, resnet18, resnet34, resnet50, resnet101, resnet152
 from tqdm import tqdm
 
 from src.transforms.alexnet import get_train_transforms, get_val_transforms
@@ -22,6 +22,7 @@ def parse_args() -> Namespace:
     """
     parser = ArgumentParser()
     parser.add_argument('--data_root', type=str, default="artifacts/datasets/ImageNet/ILSVRC2012")
+    parser.add_argument('--model', type=str, help="Model architecture to use.", required=True)
     parser.add_argument('--save_model_path', type=str, default=".")
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--num_workers', type=int, default=4)
@@ -94,13 +95,13 @@ def val_loop(dataloader, model, loss_fn, device, epoch):
     return running_loss / len(dataloader), correct1 / total, correct5 / total
 
 
-def save_checkpoint(path: str, model: AlexNet, optimizer: Optimizer, scheduler: LRScheduler, epoch: int,
+def save_checkpoint(path: str, model: Module, optimizer: Optimizer, scheduler: LRScheduler, epoch: int,
                     val_top1_acc: float) -> None:
     """
     Save full checkpoint with ability to resume training.
 
     :param path: Path to save checkpoint.
-    :param model: AlexNet model object.
+    :param model: Model object.
     :param optimizer: Optimizer object.
     :param scheduler: Scheduler object.
     :param epoch: Epoch number.
@@ -117,12 +118,21 @@ def save_checkpoint(path: str, model: AlexNet, optimizer: Optimizer, scheduler: 
 
 
 def main():
-    """Parse arguments, prepare data/loaders, and train AlexNet on ImageNet.
+    """Parse arguments, prepare data/loaders, and train model on ImageNet.
 
     Executes a full training loop: initializes model/optimizer/scheduler,
     iterates over epochs with train/val phases, logs metrics, and saves
     checkpoints after each epoch.
     """
+    models_dict = {
+        "AlexNet": AlexNet,
+        "ResNet18": resnet18,
+        "ResNet34": resnet34,
+        "ResNet50": resnet50,
+        "ResNet101": resnet101,
+        "ResNet152": resnet152,
+    }
+
     args = parse_args()
 
     # MLflow setup
@@ -146,7 +156,7 @@ def main():
     valloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
     print('Val dataset size:', len(valset))
 
-    net = AlexNet()
+    net = models_dict[args.model]()
     net.to(device)
 
     criterion = CrossEntropyLoss()
@@ -177,10 +187,10 @@ def main():
         )
 
     mlflow.set_experiment(args.experiment_name)
-    with mlflow.start_run(run_name=net.__class__.__name__):
+    with mlflow.start_run(run_name=args.model):
         mlflow.log_params(mlflow_params)
-        best_model_name = f"alexnet_imagenet1000_best_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
-        last_model_name = f"alexnet_imagenet1000_last_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
+        best_model_name = f"{args.model}_imagenet1000_best_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
+        last_model_name = f"{args.model}_imagenet1000_last_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
         for epoch in range(start_epoch, args.epochs + 1):
             train_loss, train_top1_acc, train_top5_acc = train_loop(trainloader, net, criterion, optimizer, device,
                                                                     epoch)
