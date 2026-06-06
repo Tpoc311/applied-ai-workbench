@@ -4,11 +4,13 @@ A docker workspace for using PyTorch to learn and solve various problems.
 
 ## Structure
 
+```text
 pytorch/
 ├── docker/                # dockerfile and requirements
 ├── image_classification/  # image classification experiments and training pipelines
 ├── compose.yaml           # Docker Compose configuration
 └── README.md              # PyTorch workspace overview
+```
 
 ## Available tasks
 
