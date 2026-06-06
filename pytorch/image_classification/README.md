@@ -159,9 +159,9 @@ python3 pytorch/image_classification/test_imagenet1000.py \
 #### Choose best model
 
 <p align="center">
-  <img src="pytorch/image_classification/images/results/losses.png" width="32%">
-  <img src="pytorch/image_classification/images/results/top-1_acc.png" width="32%">
-  <img src="pytorch/image_classification/images/results/top-5_acc.png" width="32%">
+  <img src="images/results/losses.png" width="32%">
+  <img src="images/results/top-1_acc.png" width="32%">
+  <img src="images/results/top-5_acc.png" width="32%">
 </p>
 
 After approximately 47 epochs, AlexNet shows almost no improvement in `val_top1_acc`, even though `train_top1_acc`
