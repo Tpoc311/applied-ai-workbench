@@ -96,7 +96,7 @@ def val_loop(dataloader, model, loss_fn, device, epoch):
 
 
 def save_checkpoint(path: str, model: Module, optimizer: Optimizer, scheduler: LRScheduler, epoch: int,
-                    val_top1_acc: float) -> None:
+                    best_val_top1_acc: float) -> None:
     """
     Save full checkpoint with ability to resume training.
 
@@ -105,14 +105,14 @@ def save_checkpoint(path: str, model: Module, optimizer: Optimizer, scheduler: L
     :param optimizer: Optimizer object.
     :param scheduler: Scheduler object.
     :param epoch: Epoch number.
-    :param val_top1_acc: Top-1 accuracy of the validation epoch.
+    :param best_val_top1_acc: Best validation Top-1 accuracy so far.
     """
     checkpoint = {
         "epoch": epoch,
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
         "scheduler_state_dict": scheduler.state_dict(),
-        "val_top1_acc": val_top1_acc,
+        "best_val_top1_acc": best_val_top1_acc,
     }
     torch.save(checkpoint, path)
 
@@ -215,7 +215,7 @@ def main():
                 optimizer=optimizer,
                 scheduler=scheduler,
                 epoch=epoch,
-                val_top1_acc=best_val_top1_acc,
+                best_val_top1_acc=best_val_top1_acc,
             )
             mlflow.log_artifact(last_model_path)
 
@@ -227,7 +227,7 @@ def main():
                     optimizer=optimizer,
                     scheduler=scheduler,
                     epoch=epoch,
-                    val_top1_acc=best_val_top1_acc,
+                    best_val_top1_acc=best_val_top1_acc,
                 )
                 mlflow.log_artifact(best_model_path)
 
