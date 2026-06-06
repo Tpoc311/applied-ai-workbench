@@ -22,11 +22,19 @@ The repository may include work related to:
 
 ## Repository structure
 
-The structure of this repository will evolve over time as new tasks and projects are added.
-
 ```text
 .
-├── artifacts/  # large files and experiment-related assets
-├── docs/       # contains supplementary documentation, notes, and setup-related materials
-├── pytorch/    # contains docker image of PyTorch workspace for different CV-tasks
+├── artifacts/  # large files, trained models, logs, and experiment-related assets
+├── docs/       # supplementary documentation, notes, and setup-related materials
+├── pytorch/    # PyTorch workspace with CV tasks and experiments
 └── README.md   # repository overview
+```
+
+## Where to start
+
+The repository is organized into task-oriented workspaces. Currently, the main active workspace is:
+
+- [PyTorch workspace](./pytorch) — Docker-based environment and practical PyTorch implementations for computer vision
+  tasks.
+
+More workspaces may be added later, for example for OpenMMLab, Ultralytics, or other applied AI tooling.
