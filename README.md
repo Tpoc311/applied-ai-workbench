@@ -38,3 +38,16 @@ The repository is organized into task-oriented workspaces. Currently, the main a
   tasks.
 
 More workspaces may be added later, for example for OpenMMLab, Ultralytics, or other applied AI tooling.
+
+## My hardware
+
+For most experiments, I use my personal PC with the following specs:
+
+* GPU - 1x Nvidia RTX 3060 12 Gb.
+* CPU - AMD Ryzen 9 7900X.
+* RAM - 2x32 Gb DDR5.
+* SSD - Samsung 990 PRO 2 TB.
+* OS - Ubuntu 24.04 LTS.
+
+If an experiment requires or uses different hardware, it will be explicitly specified in the respective experiment's
+README.
