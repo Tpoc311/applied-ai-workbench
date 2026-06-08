@@ -1,0 +1,5 @@
+outs:
+- md5: 3bc654f54c965b357ba83eacf33a71a6
+  size: 174571123
+  hash: md5
+  path: resnet34_imagenet1000_best_batch256_lr0.1_momentum0.9.pt

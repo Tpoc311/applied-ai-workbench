@@ -4,17 +4,14 @@ import torch.nn.functional as F
 
 
 class Net(nn.Module):
-    """
-    Simple convolutional neural network for CIFAR-10 classification.
+    """Simple convolutional neural network for CIFAR-10 classification.
 
     Architecture consists of two convolutional layers with max pooling,
     followed by three fully connected layers. Outputs raw logits.
     """
 
     def __init__(self):
-        """
-        Initialize network layers and set up the computational graph.
-        """
+        """Initialize network layers and set up the computational graph."""
         super().__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
@@ -24,8 +21,7 @@ class Net(nn.Module):
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        """
-        Execute the forward pass of the network.
+        """Execute the forward pass of the network.
 
         :param x: Input batch of CIFAR-10 images with shape (B, 3, 32, 32).
         :return: Raw classification logits with shape (B, 10).

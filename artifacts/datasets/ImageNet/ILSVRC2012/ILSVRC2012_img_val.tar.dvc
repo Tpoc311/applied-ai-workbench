@@ -1,0 +1,5 @@
+outs:
+- md5: 29b22e2961454d5413ddabcf34fc5622
+  size: 6744924160
+  hash: md5
+  path: ILSVRC2012_img_val.tar

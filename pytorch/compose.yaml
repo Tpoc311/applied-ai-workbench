@@ -1,6 +1,8 @@
 services:
   pytorch-workspace:
     image: pytorch-workspace:latest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     build:
       context: .
       dockerfile: docker/pytorch-workspace.dockerfile
