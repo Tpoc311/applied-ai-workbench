@@ -7,8 +7,8 @@ from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageNet
 from tqdm import tqdm
+from torchvision.models import AlexNet, resnet18, resnet34, resnet50, resnet101, resnet152
 
-from src.models.imagenet1000 import models_dict
 from src.transforms.alexnet import get_val_transforms
 from src.utils import decode_image
 
@@ -92,4 +92,12 @@ def main():
 
 
 if __name__ == "__main__":
+    models_dict = {
+        "AlexNet": AlexNet,
+        "ResNet18": resnet18,
+        "ResNet34": resnet34,
+        "ResNet50": resnet50,
+        "ResNet101": resnet101,
+        "ResNet152": resnet152,
+    }
     main()
