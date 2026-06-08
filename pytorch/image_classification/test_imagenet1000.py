@@ -6,8 +6,8 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageNet
-from tqdm import tqdm
 from torchvision.models import AlexNet, resnet18, resnet34, resnet50, resnet101, resnet152
+from tqdm import tqdm
 
 from src.transforms.alexnet import get_val_transforms
 from src.utils import decode_image
@@ -19,11 +19,11 @@ def parse_args() -> Namespace:
     :return: Namespace containing parsed CLI arguments.
     """
     parser = ArgumentParser()
-    parser.add_argument('--data_root', type=str, default="artifacts/datasets/ImageNet/ILSVRC2012")
-    parser.add_argument('--model', type=str, help="Model architecture to use.", required=True)
-    parser.add_argument('--models_dir', type=str)
-    parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--num_workers', type=int, default=4)
+    parser.add_argument("--data_root", type=str, default="artifacts/datasets/ImageNet/ILSVRC2012")
+    parser.add_argument("--model", type=str, help="Model architecture to use.", required=True)
+    parser.add_argument("--models_dir", type=str)
+    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--num_workers", type=int, default=4)
     return parser.parse_args()
 
 
@@ -67,11 +67,11 @@ def main():
     args = parse_args()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Device: {device}")
+    tqdm.write(f"Device: {device}")
 
-    valset = ImageNet(root=args.data_root, split='val', loader=decode_image, transform=get_val_transforms())
+    valset = ImageNet(root=args.data_root, split="val", loader=decode_image, transform=get_val_transforms())
     valloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
-    print('Val dataset size:', len(valset))
+    tqdm.write(f"Val dataset size: {len(valset)}")
 
     with open("ILSVRC2012_val_images.txt", "w") as f:
         for model_name in sorted(os.listdir(args.models_dir)):
@@ -83,11 +83,12 @@ def main():
             net.load_state_dict(checkpoint["model_state_dict"])
             net.to(device)
 
+            tqdm.write(f"Testing model: {model_name}, epoch: {checkpoint["epoch"]}")
+
             criterion = CrossEntropyLoss()
             val_loss, val_acc = val_loop(valloader, net, criterion, device)
 
             f.write(f"model: {model_name}, val_loss={val_loss:.4f}, val_acc={val_acc:.4f}.\n")
-            tqdm.write(f"model: {model_name}, epoch: {checkpoint["epoch"]}, val_loss={val_loss:.4f}, val_acc={val_acc:.4f}.\n")
     tqdm.write(f"Finished Testing")
 
 

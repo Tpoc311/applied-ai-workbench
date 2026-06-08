@@ -21,18 +21,18 @@ def parse_args() -> Namespace:
     :return: Parsed arguments namespace containing training hyperparameters.
     """
     parser = ArgumentParser()
-    parser.add_argument('--data_root', type=str, default="artifacts/datasets/ImageNet/ILSVRC2012")
-    parser.add_argument('--model', type=str, help="Model architecture to use.", required=True)
-    parser.add_argument('--save_model_path', type=str, default=".")
-    parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--num_workers', type=int, default=4)
-    parser.add_argument('--epochs', type=int, default=90)
-    parser.add_argument('--lr', type=float, default=0.01)
-    parser.add_argument('--momentum', type=float, default=0.9)
-    parser.add_argument('--weight_decay', type=float, default=0.0005)
-    parser.add_argument('--mlflow_address', type=str, default="http://host.docker.internal:8081")
-    parser.add_argument('--experiment_name', type=str, default="ImageNet1000")
-    parser.add_argument('--resume_from', type=str, default=None)
+    parser.add_argument("--data_root", type=str, default="artifacts/datasets/ImageNet/ILSVRC2012")
+    parser.add_argument("--model", type=str, help="Model architecture to use.", required=True)
+    parser.add_argument("--save_model_path", type=str, default=".")
+    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--num_workers", type=int, default=4)
+    parser.add_argument("--epochs", type=int, default=90)
+    parser.add_argument("--lr", type=float, default=0.01)
+    parser.add_argument("--momentum", type=float, default=0.9)
+    parser.add_argument("--weight_decay", type=float, default=0.0005)
+    parser.add_argument("--mlflow_address", type=str, default="http://host.docker.internal:8081")
+    parser.add_argument("--experiment_name", type=str, default="ImageNet1000")
+    parser.add_argument("--resume_from", type=str, default=None)
     return parser.parse_args()
 
 
@@ -63,7 +63,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, epoch):
             "loss": f"{running_loss / i:.3f}",
             "top1_acc": f"{correct1 / total:.4f}",
             "top5_acc": f"{correct5 / total:.4f}",
-            "lr": f"{optimizer.param_groups[0]['lr']:.5f}",
+            "lr": f"{optimizer.param_groups[0]["lr"]:.5f}",
         })
     return running_loss / len(dataloader), correct1 / total, correct5 / total
 
@@ -137,15 +137,15 @@ def main():
     }
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Device: {device}")
+    tqdm.write(f"Device: {device}")
 
-    trainset = ImageNet(root=args.data_root, split='train', loader=decode_image, transform=get_train_transforms())
+    trainset = ImageNet(root=args.data_root, split="train", loader=decode_image, transform=get_train_transforms())
     trainloader = DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
-    print('Train dataset size:', len(trainset))
+    tqdm.write(f"Train dataset size: {len(trainset)}")
 
-    valset = ImageNet(root=args.data_root, split='val', loader=decode_image, transform=get_val_transforms())
+    valset = ImageNet(root=args.data_root, split="val", loader=decode_image, transform=get_val_transforms())
     valloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
-    print('Val dataset size:', len(valset))
+    tqdm.write(f"Val dataset size: {len(valset)}")
 
     net = models_dict[args.model]()
     net.to(device)
@@ -170,9 +170,9 @@ def main():
         start_epoch = checkpoint["epoch"] + 1
         best_val_top1_acc = checkpoint["best_val_top1_acc"]
 
-        print(
+        tqdm.write(
             f"Resumed from {args.resume_from}: "
-            f"last_epoch={checkpoint['epoch']}, "
+            f"last_epoch={checkpoint["epoch"]}, "
             f"start_epoch={start_epoch}, "
             f"best_val_top1_acc={best_val_top1_acc:.4f}"
         )
@@ -232,7 +232,7 @@ def main():
                 mlflow.log_artifact(best_model_path)
 
                 tqdm.write(f"New best model: epoch={epoch}, val_top1_acc={val_top1_acc:.4f}")
-    print(f"Finished Training")
+    tqdm.write(f"Finished Training")
 
 
 if __name__ == "__main__":
