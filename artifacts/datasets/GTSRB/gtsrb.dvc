@@ -1,0 +1,6 @@
+outs:
+- md5: 0fbf4ed94fe6e15d5c0f9cad050e8b6c.dir
+  size: 369864458
+  nfiles: 39316
+  hash: md5
+  path: gtsrb
