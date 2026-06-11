@@ -14,7 +14,7 @@ services:
     gpus: all
     volumes:
       - .:/home/${USER}/applied-ai-workbench/pytorch
-      - /home/${USER}/github/applied-ai-workbench/artifacts:/home/${USER}/applied-ai-workbench/artifacts:ro
+      - /nvme/github/applied-ai-workbench/artifacts:/home/${USER}/applied-ai-workbench/artifacts:rw
     ports:
       - "8002:22"
     restart: always
