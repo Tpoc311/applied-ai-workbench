@@ -1,0 +1,5 @@
+outs:
+- md5: de68da9899c3c9d2c5602d6c2d9cdb17
+  size: 170641901
+  hash: md5
+  path: resnet34_gtsrb_best_batch128_lr0.001_momentum0.9.pt
