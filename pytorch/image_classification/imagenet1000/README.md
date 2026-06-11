@@ -43,8 +43,7 @@ python3 pytorch/image_classification/test_imagenet1000.py \
 
 ## ResNet
 
-Models available for training are presented in `src/models/imagenet1000.py` in `models_dict`. For ResNet training I used
-configuration as follows:
+For ResNet training I used configuration as follows:
 
 ### Training
 
