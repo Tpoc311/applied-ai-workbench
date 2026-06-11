@@ -9,7 +9,7 @@ from torchvision.datasets import ImageNet
 from torchvision.models import AlexNet, resnet18, resnet34, resnet50, resnet101, resnet152
 from tqdm import tqdm
 
-from src.transforms.alexnet import get_val_transforms
+from pytorch.image_classification.src.transforms import get_val_transforms
 from src.utils import decode_image
 
 
