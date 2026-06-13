@@ -1,0 +1,105 @@
+import os
+from argparse import ArgumentParser, Namespace
+from os.path import join
+
+import torch
+from torch import nn
+from torch.nn import CrossEntropyLoss
+from torch.utils.data import DataLoader
+from torchvision.datasets import GTSRB
+from torchvision.models import AlexNet, resnet18, resnet34, resnet50, resnet101, resnet152
+from tqdm import tqdm
+
+from src.transforms import get_val_transforms
+
+
+def parse_args() -> Namespace:
+    """Parse command-line arguments for the testing script.
+
+    :return: Namespace containing parsed CLI arguments.
+    """
+    parser = ArgumentParser()
+    parser.add_argument("--data_root", type=str, default="artifacts/datasets/GTSRB")
+    parser.add_argument("--model", type=str, help="Model architecture to use.", required=True)
+    parser.add_argument("--models_dir", type=str)
+    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--num_workers", type=int, default=4)
+    return parser.parse_args()
+
+
+def val_loop(dataloader, model, loss_fn, device):
+    """Run the validation loop for the model.
+
+    :param dataloader: DataLoader yielding validation batches (images, labels).
+    :param model: Pre-trained neural network to evaluate.
+    :param loss_fn: Loss function used to compute validation loss.
+    :param device: PyTorch device (cpu/cuda) for tensor placement.
+    :return: Tuple of (average_loss, accuracy) over the entire validation set.
+    """
+    model.eval()
+
+    running_loss, correct, total = 0.0, 0.0, 0
+
+    pbar = tqdm(enumerate(dataloader, start=1), total=len(dataloader), desc=f"Testing")
+    with torch.no_grad():
+        for i, data in pbar:
+            inputs, labels = data[0].to(device), data[1].to(device)
+
+            output = model(inputs)
+            running_loss += loss_fn(output, labels).item()
+            correct += (output.argmax(1) == labels).type(torch.float).sum().item()
+            total += labels.size(0)
+
+            pbar.set_postfix({
+                "loss": f"{running_loss / i:.3f}",
+                "acc": f"{correct / total:.4f}",
+            })
+
+    return running_loss / len(dataloader), correct / total
+
+
+def main():
+    """Parse arguments, load the validation dataset, and evaluate all saved models.
+
+     Iterates over model checkpoints in the specified directory, loads each model,
+     computes validation loss and accuracy on ImageNet, and writes results to a file.
+     """
+    args = parse_args()
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    tqdm.write(f"Device: {device}")
+
+    valset = GTSRB(root=args.data_root, split="test", transform=get_val_transforms())
+    valloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
+    tqdm.write(f"Test dataset size: {len(valset)}")
+
+    with open("GTSRB_test_acc.txt", "w") as f:
+        for model_name in sorted(os.listdir(args.models_dir)):
+            if model_name.split(".")[-1] != "pt":
+                continue
+
+            net = models_dict[args.model]()
+            net.fc = nn.Linear(net.fc.in_features, len(set([label for _, label in valset])))
+            checkpoint = torch.load(join(args.models_dir, model_name), map_location=device)
+            net.load_state_dict(checkpoint["model_state_dict"])
+            net.to(device)
+
+            tqdm.write(f"Testing model: {model_name}, epoch: {checkpoint["epoch"]}")
+
+            criterion = CrossEntropyLoss()
+            val_loss, val_acc = val_loop(valloader, net, criterion, device)
+
+            f.write(f"model: {model_name}, val_loss={val_loss:.4f}, val_acc={val_acc:.4f}.\n")
+    tqdm.write(f"Finished Testing")
+
+
+if __name__ == "__main__":
+    models_dict = {
+        "AlexNet": AlexNet,
+        "ResNet18": resnet18,
+        "ResNet34": resnet34,
+        "ResNet50": resnet50,
+        "ResNet101": resnet101,
+        "ResNet152": resnet152,
+    }
+    main()
