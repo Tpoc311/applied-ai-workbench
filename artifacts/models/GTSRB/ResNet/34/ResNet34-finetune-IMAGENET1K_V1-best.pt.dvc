@@ -1,0 +1,5 @@
+outs:
+- md5: de68da9899c3c9d2c5602d6c2d9cdb17
+  size: 170641901
+  hash: md5
+  path: ResNet34-finetune-IMAGENET1K_V1-best.pt

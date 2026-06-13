@@ -1,6 +1,6 @@
 # ImageNet-1000
 
-This experiment was my second step after the simplest CNN baseline and studying the LeNet (1998) architecture.
+This experiment was my second step after building the simplest CNN baseline and studying the LeNet-5 architecture.
 
 ## Goal
 
@@ -8,11 +8,11 @@ Understand a classic large-scale CNN architecture and train it myself on ImageNe
 
 ## What I did
 
-* Researched the AlexNet and ResNet architectures, its tensor flow and key differences.
-* Used `torchvision`implementations to train both of them.
+* Researched the AlexNet and ResNet architectures, their tensor flow, and key differences.
+* Used `torchvision` implementations to train both of them.
 * Built a train/validation pipeline for ImageNet-1000.
 * Implemented preprocessing, training loop, validation loop, metrics logging, and LR scheduling.
-* Implemented test script which counts accuracy of prediction on validation set.
+* Implemented an evaluation script that computes accuracy on the validation set.
 
 ## AlexNet
 
@@ -21,14 +21,14 @@ Understand a classic large-scale CNN architecture and train it myself on ImageNe
 Default training configuration is defined directly in the script arguments.
 
 ```bash
-python3 pytorch/image_classification/train_imagenet1000.py \
+python3 pytorch/image_classification/imagenet1000/train.py \
   --model AlexNet
 ```
 
 Resume training example:
 
 ```bash
-python3 pytorch/image_classification/train_imagenet1000.py \
+python3 pytorch/image_classification/imagenet1000/train.py \
   --model AlexNet \
   --resume_from artifacts/models/ImageNet-1000/AlexNet/alexnet_imagenet1000_best_batch128_lr0.01_momentum0.9.pt
 ```
@@ -36,20 +36,19 @@ python3 pytorch/image_classification/train_imagenet1000.py \
 ### Testing
 
 ```bash
-python3 pytorch/image_classification/test_imagenet1000.py \
+python3 pytorch/image_classification/imagenet1000/test.py \
   --model AlexNet \
   --models_dir artifacts/models/ImageNet-1000/AlexNet
 ```
 
 ## ResNet
 
-Models available for training are presented in `src/models/imagenet1000.py` in `models_dict`. For ResNet training I used
-configuration as follows:
+For ResNet training I used configuration as follows:
 
 ### Training
 
 ```bash
-python3 pytorch/image_classification/train_imagenet1000.py \
+python3 pytorch/image_classification/imagenet1000/train.py \
   --model ResNet34 \
   --batch_size 256 \
   --num_workers 6 \
@@ -58,8 +57,8 @@ python3 pytorch/image_classification/train_imagenet1000.py \
   --weight_decay 0.0001
 ```
 
-More over I switched the scheduler to 'ReduceLROnPlateau' cause the [ResNet authors](https://arxiv.org/abs/1512.03385)
-used the same way to reduce learning rate:
+Moreover, I switched the scheduler to `ReduceLROnPlateau`, because the [ResNet paper](https://arxiv.org/abs/1512.03385)
+follows a similar idea of reducing the learning rate when the error stops improving:
 
 ```text
     scheduler = ReduceLROnPlateau(
@@ -83,7 +82,7 @@ scheduler.step(val_top1_error)
 Resume training example:
 
 ```bash
-python3 pytorch/image_classification/train_imagenet1000.py \
+python3 pytorch/image_classification/imagenet1000/train.py \
   --model ResNet34 \
   --resume_from artifacts/models/ImageNet-1000/ResNet/34/resnet34_imagenet1000_best_batch256_lr0.1_momentum0.9.pt
 ```
@@ -91,34 +90,43 @@ python3 pytorch/image_classification/train_imagenet1000.py \
 ### Testing
 
 ```bash
-python3 pytorch/image_classification/test_imagenet1000.py \
+python3 pytorch/image_classification/imagenet1000/test.py \
   --model ResNet34 \
-  --models_dir artifacts/models/ImageNet-1000/ResNet
+  --models_dir artifacts/models/ImageNet-1000/ResNet/34
 ```
 
-## Result
+## Results
 
 ### Choose best model
 
+The main goal of this experiment was to train classic large-scale CNN architectures on ImageNet-1000 and go through the
+full training pipeline: preprocessing, training, validation, checkpointing, metrics logging, and learning rate
+scheduling.
+
 <p align="center">
-    <img src="images/results/top-1_acc.png" width="40%">
-    <img src="images/results/top-5_acc.png" width="40%">
-    <img src="images/results/losses.png" width="40%">
+    <img src="images/results/train_loss-vs-val_loss.png" width="32%">
+    <img src="images/results/train_top1_acc-vs-val_top1_acc.png" width="32%">
+    <img src="images/results/train_top5_acc-vs-val_top5_acc.png" width="32%">
 </p>
 
-After approximately 47 epochs, AlexNet shows almost no improvement in `val_top1_acc`, even though `train_top1_acc`
-continues to rise. Consequently, further training primarily improves performance on the training set but yields almost
-no gains in generalization.
+**AlexNet.**
+AlexNet was useful as a first classic ImageNet-scale CNN architecture. It trained successfully, but reached a lower
+validation accuracy and plateaued earlier than ResNet34.
 
-For ResNet34, the optimal checkpoint should be selected based on the maximum `val_top1_acc`; judging by the graph, this
-occurs somewhere around the 45–60 epoch mark. If the values remain nearly identical after epoch 45, it is best
-to choose the earliest checkpoint that achieves maximum—or near-maximum—validation accuracy.
+**ResNet34.**
+ResNet34 showed better validation accuracy and lower validation loss than AlexNet. The metric jumps after learning rate
+drops also helped to observe how LR scheduling affects large-scale CNN training.
+
+**Overall.**
+ResNet34 performed better in terms of both top-1 and top-5 accuracy, but both models showed signs of overfitting. The
+main result of the experiment was practical experience with training, validating, comparing, and monitoring classic CNN
+architectures on a large-scale dataset.
 
 ### Training time
 
-AlexNet took around <b>20 minutes</b> per epoch and <b>30 hours</b> for 90 epochs.
+AlexNet took around **20 minutes** per epoch and **30 hours** for 90 epochs.
 
-ResNet34 took around <b>60 minutes</b> per epoch and almost <b>5 days</b> for 100 epochs.
+ResNet34 took around **60 minutes** per epoch and almost **5 days** for 100 epochs.
 
 This was not a strict historical reproduction of the original papers. I used the torchvision implementation and focused
 on understanding the architecture, tensor flow, and the full training pipeline.

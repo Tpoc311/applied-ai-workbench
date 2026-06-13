@@ -3,14 +3,14 @@ from argparse import ArgumentParser, Namespace
 from os.path import join
 
 import torch
+from torch import nn
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
-from torchvision.datasets import ImageNet
+from torchvision.datasets import GTSRB
 from torchvision.models import AlexNet, resnet18, resnet34, resnet50, resnet101, resnet152
 from tqdm import tqdm
 
 from src.transforms import get_val_transforms
-from src.utils import decode_image
 
 
 def parse_args() -> Namespace:
@@ -19,7 +19,7 @@ def parse_args() -> Namespace:
     :return: Namespace containing parsed CLI arguments.
     """
     parser = ArgumentParser()
-    parser.add_argument("--data_root", type=str, default="artifacts/datasets/ImageNet/ILSVRC2012")
+    parser.add_argument("--data_root", type=str, default="artifacts/datasets/GTSRB")
     parser.add_argument("--model", type=str, help="Model architecture to use.", required=True)
     parser.add_argument("--models_dir", type=str)
     parser.add_argument("--batch_size", type=int, default=128)
@@ -69,16 +69,17 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     tqdm.write(f"Device: {device}")
 
-    valset = ImageNet(root=args.data_root, split="val", loader=decode_image, transform=get_val_transforms())
+    valset = GTSRB(root=args.data_root, split="test", transform=get_val_transforms())
     valloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
-    tqdm.write(f"Val dataset size: {len(valset)}")
+    tqdm.write(f"Test dataset size: {len(valset)}")
 
-    with open("ILSVRC2012_val_images.txt", "w") as f:
+    with open("GTSRB_test_acc.txt", "w") as f:
         for model_name in sorted(os.listdir(args.models_dir)):
             if model_name.split(".")[-1] != "pt":
                 continue
 
             net = models_dict[args.model]()
+            net.fc = nn.Linear(net.fc.in_features, len(set([label for _, label in valset])))
             checkpoint = torch.load(join(args.models_dir, model_name), map_location=device)
             net.load_state_dict(checkpoint["model_state_dict"])
             net.to(device)

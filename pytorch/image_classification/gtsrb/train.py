@@ -3,16 +3,17 @@ from os.path import join
 
 import mlflow
 import torch
+from torch import nn
 from torch.nn import Module, CrossEntropyLoss
 from torch.optim import Optimizer, SGD
-from torch.optim.lr_scheduler import LRScheduler, MultiStepLR
-from torch.utils.data import DataLoader
-from torchvision.datasets import ImageNet
+from torch.optim.lr_scheduler import LRScheduler, ReduceLROnPlateau
+from torch.utils.data import DataLoader, Subset
+from torch.utils.data import random_split
+from torchvision.datasets import GTSRB
 from torchvision.models import AlexNet, resnet18, resnet34, resnet50, resnet101, resnet152
 from tqdm import tqdm
 
 from src.transforms import get_train_transforms, get_val_transforms
-from src.utils import decode_image
 
 
 def parse_args() -> Namespace:
@@ -21,18 +22,31 @@ def parse_args() -> Namespace:
     :return: Parsed arguments namespace containing training hyperparameters.
     """
     parser = ArgumentParser()
-    parser.add_argument("--data_root", type=str, default="artifacts/datasets/ImageNet/ILSVRC2012")
+    parser.add_argument("--data_root", type=str, default="artifacts/datasets/GTSRB")
     parser.add_argument("--model", type=str, help="Model architecture to use.", required=True)
     parser.add_argument("--save_model_path", type=str, default=".")
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--num_workers", type=int, default=4)
     parser.add_argument("--epochs", type=int, default=90)
+    parser.add_argument("--resume_from", type=str, default=None)
+
+    # Optimizer
     parser.add_argument("--lr", type=float, default=0.01)
     parser.add_argument("--momentum", type=float, default=0.9)
     parser.add_argument("--weight_decay", type=float, default=0.0005)
+
+    # Scheduler
+    parser.add_argument("--mode", type=str, default="min")
+    parser.add_argument("--factor", type=float, default=0.1)
+    parser.add_argument("--patience", type=int, default=5)
+    parser.add_argument("--scheduler_threshold", type=float, default=0.001)
+    parser.add_argument("--threshold_mode", type=str, default="abs")
+    parser.add_argument("--min_lr", type=float , default=1e-5)
+
+    # MlFlow
     parser.add_argument("--mlflow_address", type=str, default="http://host.docker.internal:8081")
-    parser.add_argument("--experiment_name", type=str, default="ImageNet1000")
-    parser.add_argument("--resume_from", type=str, default=None)
+    parser.add_argument("--experiment_name", type=str, default="GTSRB")
+    parser.add_argument("--run_name", type=str, default=None)
     return parser.parse_args()
 
 
@@ -118,7 +132,7 @@ def save_checkpoint(path: str, model: Module, optimizer: Optimizer, scheduler: L
 
 
 def main():
-    """Parse arguments, prepare data/loaders, and train model on ImageNet.
+    """Parse arguments, prepare data/loaders, and train model on GTSRB.
 
     Executes a full training loop: initializes model/optimizer/scheduler,
     iterates over epochs with train/val phases, logs metrics, and saves
@@ -139,23 +153,46 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     tqdm.write(f"Device: {device}")
 
-    trainset = ImageNet(root=args.data_root, split="train", loader=decode_image, transform=get_train_transforms())
+    dataset = GTSRB(root=args.data_root, split="train", transform=get_train_transforms())
+    n_train = int(0.8 * len(dataset))
+    n_val = len(dataset) - n_train
+
+    train_subset, val_subset = random_split(dataset, [n_train, n_val])
+
+    train_indices = train_subset.indices
+    val_indices = val_subset.indices
+
+    train_dataset = GTSRB(root=args.data_root, split="train", transform=get_train_transforms())
+    val_dataset = GTSRB(root=args.data_root, split="train", transform=get_val_transforms())
+
+    trainset = Subset(train_dataset, train_indices)
+    valset = Subset(val_dataset, val_indices)
+
     trainloader = DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
     tqdm.write(f"Train dataset size: {len(trainset)}")
 
-    valset = ImageNet(root=args.data_root, split="val", loader=decode_image, transform=get_val_transforms())
     valloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
     tqdm.write(f"Val dataset size: {len(valset)}")
 
-    net = models_dict[args.model]()
+    # Remove 'weights' param if you want to train from scratch
+    net = models_dict[args.model](weights="IMAGENET1K_V1")
+
+    ## Uncomment for freezing backbone
+    # for param in net.parameters():
+    #     param.requires_grad = False
+    net.fc = nn.Linear(net.fc.in_features, len(set([label for _, label in dataset])))
     net.to(device)
 
     criterion = CrossEntropyLoss()
     optimizer = SGD(net.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
-    scheduler = MultiStepLR(
+    scheduler = ReduceLROnPlateau(
         optimizer,
-        milestones=(int(args.epochs * 0.25), int(args.epochs * 0.5), int(args.epochs * 0.75)),
-        gamma=(1 / 250) ** (1 / 3),
+        mode=args.mode,
+        factor=args.factor,
+        patience=args.patience,
+        threshold=args.scheduler_threshold,
+        threshold_mode=args.threshold_mode,
+        min_lr=args.min_lr,
     )
 
     start_epoch = 1
@@ -178,16 +215,17 @@ def main():
         )
 
     mlflow.set_experiment(args.experiment_name)
-    with mlflow.start_run(run_name=args.model):
+    with mlflow.start_run(run_name=args.model if args.run_name is None else args.run_name):
         mlflow.log_params(mlflow_params)
-        best_model_name = f"{args.model.lower()}_imagenet1000_best_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
-        last_model_name = f"{args.model.lower()}_imagenet1000_last_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
+        best_model_name = f"{args.model.lower()}_gtsrb_best_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
+        last_model_name = f"{args.model.lower()}_gtsrb_last_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
         for epoch in range(start_epoch, args.epochs + 1):
             train_loss, train_top1_acc, train_top5_acc = train_loop(trainloader, net, criterion, optimizer, device,
                                                                     epoch)
             val_loss, val_top1_acc, val_top5_acc = val_loop(valloader, net, criterion, device, epoch)
 
-            scheduler.step()
+            val_top1_error = 1.0 - val_top1_acc
+            scheduler.step(val_top1_error)
             current_lr = optimizer.param_groups[0]["lr"]
 
             mlflow.log_metrics(

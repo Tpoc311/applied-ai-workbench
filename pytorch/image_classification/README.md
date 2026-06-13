@@ -10,3 +10,4 @@ The task additionally split into subtasks by dataset used. At the moment there a
 
 * [CIFAR-10](./cifar10)
 * [ImageNet-1000](./imagenet1000)
+* [GTSRB](./gtsrb)
