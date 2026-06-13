@@ -14,7 +14,7 @@ pytorch/
 
 ## Available tasks
 
-- [Image classification](./image_classification)
+* [Image classification](./image_classification)
 
 More tasks will be added later as the workspace grows.
 
