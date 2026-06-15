@@ -1,13 +1,17 @@
 # Image Classification
 
-This section contains my image classification experiments. The goal is to understand CNN building blocks, reproduce
-baseline training pipelines, and gradually move from simple tutorial-level models to classic architectures such as
-AlexNet and ResNet.
+This section contains my image classification experiments.
 
-## Available tasks
+The goal is to understand CNN building blocks, reproduce baseline training pipelines, and compare different training
+strategies using PyTorch and TorchVision.
 
-The task additionally split into subtasks by dataset used. At the moment there are following tasks presented:
+These experiments are part of my applied AI workbench, where I collect practical deep learning and computer vision
+implementations that can be reused in work projects, personal projects, and future experiments.
 
-* [CIFAR-10](./cifar10)
-* [ImageNet-1000](./imagenet1000)
-* [GTSRB](./gtsrb)
+## Available experiments
+
+The experiments are organized by dataset and task:
+
+* [CIFAR-10](./cifar10) - baseline CNN training pipeline in PyTorch.
+* [ImageNet-1000](./imagenet1000) - AlexNet and ResNet training experiments on a large-scale dataset.
+* [GTSRB](./gtsrb) - ResNet-34 transfer learning experiments: training from scratch, fine-tuning, and frozen backbone.
