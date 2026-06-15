@@ -9,15 +9,15 @@ Compare different transfer learning strategies on the GTSRB dataset using ResNet
 ImageNet-pretrained weights improve final accuracy, convergence speed, and training efficiency compared to training the
 same architecture from scratch.
 
-## What I did
+## Experiment checklist
 
-* Refreshed what transfer learning is.
-* Researched how to do transfer learning using PyTorch.
-* Used `torchvision` implementation of ResNet34 with IMAGENET1K_V1 weights to make three experiments:
+* [x] Refreshed what transfer learning is.
+* [x] Researched how to do transfer learning using PyTorch.
+* [x] Used `torchvision` implementation of ResNet34 with IMAGENET1K_V1 weights to make three experiments:
     - Finetuning full model.
     - Use a backbone as fixed feature extractor (freezing every layer except the fully connected layer).
     - Train full net from scratch.
-* Made conclusions about results of training and benefit of transfer learning for the task.
+* [x] Made conclusions about results of training and benefit of transfer learning for the task.
 
 Since GTSRB has only `train` and `test` splits, I split the original train split into `train` and `val` subsets.
 The original `test` split was left for final evaluation.

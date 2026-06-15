@@ -6,13 +6,16 @@ This experiment was my second step after building the simplest CNN baseline and 
 
 Understand a classic large-scale CNN architecture and train it myself on ImageNet.
 
-## What I did
+## Experiment checklist
 
-* Researched the AlexNet and ResNet architectures, their tensor flow, and key differences.
-* Used `torchvision` implementations to train both of them.
-* Built a train/validation pipeline for ImageNet-1000.
-* Implemented preprocessing, training loop, validation loop, metrics logging, and LR scheduling.
-* Implemented an evaluation script that computes accuracy on the validation set.
+* [x] Researched the AlexNet and ResNet architectures, their tensor flow, and key differences.
+* [x] Used `torchvision` implementations to train both of them.
+* [x] Built a train/validation pipeline for ImageNet-1000.
+* [x] Implemented preprocessing, training loop, validation loop, metrics logging, and LR scheduling.
+* [x] Implemented an evaluation script that computes accuracy on the validation set.
+
+I did not create an additional validation split from the ImageNet training set. I used the standard train split for
+training and the official validation split for evaluation, since ImageNet test labels are not publicly available.
 
 ## AlexNet
 

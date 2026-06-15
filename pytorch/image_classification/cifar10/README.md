@@ -12,12 +12,13 @@ Understand the full image classification workflow in PyTorch on a simple dataset
 * Optimizer step.
 * Evaluation on a test set.
 
-## What I did
+## Experiment checklist
 
-* Reproduced the official PyTorch CIFAR-10 classification tutorial.
-* Trained a small CNN written from scratch.
-* Used this experiment to understand the end-to-end training loop for image classification.
-* Learned LeNet-5 architecture.
+* [x] Reproduced the official PyTorch CIFAR-10 classification tutorial.
+* [x] Trained a small CNN written from scratch.
+* [x] Used this experiment to understand the end-to-end training loop for image classification.
+* [x] Learned LeNet-5 architecture.
+* [x] Implemented an evaluation script that computes accuracy on the test set.
 
 ## Training
 
