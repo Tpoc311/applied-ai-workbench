@@ -41,7 +41,7 @@ def parse_args() -> Namespace:
     parser.add_argument("--patience", type=int, default=5)
     parser.add_argument("--scheduler_threshold", type=float, default=0.001)
     parser.add_argument("--threshold_mode", type=str, default="abs")
-    parser.add_argument("--min_lr", type=float , default=1e-5)
+    parser.add_argument("--min_lr", type=float, default=1e-5)
 
     # MlFlow
     parser.add_argument("--mlflow_address", type=str, default="http://host.docker.internal:8081")
@@ -51,6 +51,19 @@ def parse_args() -> Namespace:
 
 
 def train_loop(dataloader, model, loss_fn, optimizer, device, epoch):
+    """Run one training epoch.
+
+    Performs forward pass, loss computation, backpropagation, optimizer step,
+    and calculates average loss, Top-1 accuracy, and Top-5 accuracy.
+
+    :param dataloader: DataLoader with training batches.
+    :param model: Model to train.
+    :param loss_fn: Loss function.
+    :param optimizer: Optimizer used to update model parameters.
+    :param device: Device on which tensors and model are located.
+    :param epoch: Current epoch number.
+    :return: Tuple containing average loss, Top-1 accuracy, and Top-5 accuracy.
+    """
     model.train()
 
     running_loss, correct1, correct5, total = 0.0, 0.0, 0.0, 0
@@ -83,6 +96,18 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, epoch):
 
 
 def val_loop(dataloader, model, loss_fn, device, epoch):
+    """Run one validation epoch.
+
+    Performs inference without gradient calculation and computes average loss,
+    Top-1 accuracy, and Top-5 accuracy on the validation dataset.
+
+    :param dataloader: DataLoader with validation batches.
+    :param model: Model to evaluate.
+    :param loss_fn: Loss function.
+    :param device: Device on which tensors and model are located.
+    :param epoch: Current epoch number.
+    :return: Tuple containing average loss, Top-1 accuracy, and Top-5 accuracy.
+    """
     model.eval()
 
     running_loss, correct1, correct5, total = 0.0, 0.0, 0.0, 0
@@ -111,8 +136,7 @@ def val_loop(dataloader, model, loss_fn, device, epoch):
 
 def save_checkpoint(path: str, model: Module, optimizer: Optimizer, scheduler: LRScheduler, epoch: int,
                     best_val_top1_acc: float) -> None:
-    """
-    Save full checkpoint with ability to resume training.
+    """Save full checkpoint with ability to resume training.
 
     :param path: Path to save checkpoint.
     :param model: Model object.
