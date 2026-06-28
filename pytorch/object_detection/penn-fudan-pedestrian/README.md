@@ -11,10 +11,10 @@ Understand basic object detection model architecture and finetune pretrained wei
 
 ## Experiment checklist
 
-* [ ] Research the Faster R-CNN architecture.
+* [x] Research the Faster R-CNN architecture.
 * [ ] Understand how object detection differs from image classification: model inputs, targets, outputs, loss functions,
   and evaluation.
-* [ ] Understand the main parts of a two-stage detector: backbone, RPN, RoI pooling/align, classification head, and box
+* [x] Understand the main parts of a two-stage detector: backbone, RPN, RoI pooling/align, classification head, and box
   regression head.
 * [ ] Refresh basic object detection concepts: bounding boxes, labels, objectness score, confidence score, IoU, NMS, and
   anchors.
@@ -27,3 +27,16 @@ Understand basic object detection model architecture and finetune pretrained wei
 * [ ] Visualize predictions with bounding boxes, confidence scores, and ground-truth boxes.
 * [ ] Analyze typical errors: missed pedestrians, false positives, duplicate boxes, and inaccurate localization.
 * [ ] Write conclusions about Faster R-CNN, transfer learning, and object detection metrics.
+
+## Training
+
+Finetuning full model:
+
+```bash
+python3 pytorch/object_detection/penn-fudan-pedestrian/train.py \
+  --lr 0.001 \
+  --epochs 32 \
+  --step_size 8 \
+  --run_name finetune \
+  --mlflow_address http://host.docker.internal:8081
+```
