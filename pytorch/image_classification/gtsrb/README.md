@@ -34,7 +34,8 @@ python3 pytorch/image_classification/gtsrb/train.py \
   --lr 0.001 \
   --weight_decay 0.0001 \
   --patience 3 \
-  --run_name finetune
+  --run_name finetune \
+  --mlflow_address http://host.docker.internal:8081
 ```
 
 Fixed backbone as feature extractor (frozen layers):
@@ -46,7 +47,8 @@ python3 pytorch/image_classification/gtsrb/train.py \
   --epochs 45 \
   --weight_decay 0.0001 \
   --patience 3 \
-  --run_name fixedBackbone
+  --run_name fixedBackbone \
+  --mlflow_address http://host.docker.internal:8081
 ```
 
 Training from scratch:
@@ -57,7 +59,8 @@ python3 pytorch/image_classification/gtsrb/train.py \
   --epochs 45 \
   --weight_decay 0.0001 \
   --patience 5 \
-  --run_name fromScratch
+  --run_name fromScratch \
+  --mlflow_address http://host.docker.internal:8081
 ```
 
 ### Testing

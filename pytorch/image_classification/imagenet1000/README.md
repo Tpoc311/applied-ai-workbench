@@ -25,7 +25,8 @@ Default training configuration is defined directly in the script arguments.
 
 ```bash
 python3 pytorch/image_classification/imagenet1000/train.py \
-  --model AlexNet
+  --model AlexNet \
+  --mlflow_address http://host.docker.internal:8081
 ```
 
 Resume training example:
@@ -33,7 +34,8 @@ Resume training example:
 ```bash
 python3 pytorch/image_classification/imagenet1000/train.py \
   --model AlexNet \
-  --resume_from artifacts/models/ImageNet-1000/AlexNet/alexnet_imagenet1000_best_batch128_lr0.01_momentum0.9.pt
+  --resume_from artifacts/models/ImageNet-1000/AlexNet/alexnet_imagenet1000_best_batch128_lr0.01_momentum0.9.pt \
+  --mlflow_address http://host.docker.internal:8081
 ```
 
 ### Testing
@@ -57,7 +59,8 @@ python3 pytorch/image_classification/imagenet1000/train.py \
   --num_workers 6 \
   --epochs 100 \
   --lr 0.1 \
-  --weight_decay 0.0001
+  --weight_decay 0.0001 \
+  --mlflow_address http://host.docker.internal:8081
 ```
 
 Moreover, I switched the scheduler to `ReduceLROnPlateau`, because the [ResNet paper](https://arxiv.org/abs/1512.03385)
@@ -87,7 +90,8 @@ Resume training example:
 ```bash
 python3 pytorch/image_classification/imagenet1000/train.py \
   --model ResNet34 \
-  --resume_from artifacts/models/ImageNet-1000/ResNet/34/resnet34_imagenet1000_best_batch256_lr0.1_momentum0.9.pt
+  --resume_from artifacts/models/ImageNet-1000/ResNet/34/resnet34_imagenet1000_best_batch256_lr0.1_momentum0.9.pt \
+  --mlflow_address http://host.docker.internal:8081
 ```
 
 ### Testing
