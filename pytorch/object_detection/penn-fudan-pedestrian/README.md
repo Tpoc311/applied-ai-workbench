@@ -19,8 +19,8 @@ Understand basic object detection model architecture and finetune pretrained wei
 * [ ] Refresh basic object detection concepts: bounding boxes, labels, objectness score, confidence score, IoU, NMS, and
   anchors.
 * [ ] Research basic object detection metrics and choose the main one for evaluation.
-* [ ] Understand `collate_fn` in the data loader.
-* [ ] Load images, bounding boxes, labels, and image IDs in the format expected by the torchvision detection model.
+* [x] Understand `collate_fn` in the data loader.
+* [x] Load images, bounding boxes, labels, and image IDs in the format expected by the torchvision detection model.
 * [ ] Configure detection transforms and data loaders.
 * [ ] Fine-tune Faster R-CNN on the Penn-Fudan dataset.
 * [ ] Evaluate the model using the chosen object detection metric.
