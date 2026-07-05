@@ -3,7 +3,7 @@ from os.path import join
 
 import mlflow
 import torch
-from torch import nn
+from torch import nn, Generator
 from torch.nn import Module, CrossEntropyLoss
 from torch.optim import Optimizer, SGD
 from torch.optim.lr_scheduler import LRScheduler, ReduceLROnPlateau
@@ -181,7 +181,7 @@ def main():
     n_train = int(0.8 * len(dataset))
     n_val = len(dataset) - n_train
 
-    train_subset, val_subset = random_split(dataset, [n_train, n_val])
+    train_subset, val_subset = random_split(dataset, [n_train, n_val], generator=Generator().manual_seed(42))
 
     train_indices = train_subset.indices
     val_indices = val_subset.indices
@@ -239,10 +239,11 @@ def main():
         )
 
     mlflow.set_experiment(args.experiment_name)
-    with mlflow.start_run(run_name=args.model if args.run_name is None else args.run_name):
+    run_name = args.model if args.run_name is None else args.run_name
+    with mlflow.start_run(run_name=run_name):
         mlflow.log_params(mlflow_params)
-        best_model_name = f"{args.model.lower()}_gtsrb_best_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
-        last_model_name = f"{args.model.lower()}_gtsrb_last_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
+        best_model_name = f"{args.model}-{run_name}-best.pt"
+        last_model_name = f"{args.model}-{run_name}-last.pt"
         for epoch in range(start_epoch, args.epochs + 1):
             train_loss, train_top1_acc, train_top5_acc = train_loop(trainloader, net, criterion, optimizer, device,
                                                                     epoch)
