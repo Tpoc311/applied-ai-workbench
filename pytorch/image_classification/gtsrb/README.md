@@ -118,6 +118,8 @@ relatively high, which indicates underfitting caused by the frozen feature extra
 
 So the best experiment is **finetuning pretrained ResNet34**.
 
+### Confusion matrix review
+
 ### Training time
 
 Finetuning took about **1 minute 26 seconds** per epoch and **37.9 minutes** for 30 epochs.
@@ -145,3 +147,4 @@ It would be better to improve in future works or right here:
 1. [Dataset - German Traffic Sign Recognition Benchmark (GTSRB)](https://benchmark.ini.rub.de/gtsrb_dataset.html)
 2. [Transfer Learning](https://cs231n.github.io/transfer-learning/)
 3. [Transfer Learning for Computer Vision Tutorial](https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html)
+4. [Traffic sign names](https://github.com/citlaligm/German-Traffic-Sign-Recognition/blob/master/signnames.csv)
