@@ -11,7 +11,6 @@ def get_train_transforms() -> Compose:
         ToImage(),
         Resize(256),
         RandomCrop((224, 224)),
-        RandomHorizontalFlip(),
         ToDtype(float32, scale=True),
         Normalize(
             mean=(0.485, 0.456, 0.406),

@@ -59,7 +59,7 @@ def val_loop(dataloader, model, loss_fn, device):
 
 
 def main():
-    """Parse arguments, load the validation dataset, and evaluate all saved models.
+    """Load the dataset, and evaluate all saved models.
 
      Iterates over model checkpoints in the specified directory, loads each model,
      computes validation loss and accuracy on ImageNet, and writes results to a file.
