@@ -40,3 +40,9 @@ python3 pytorch/object_detection/penn-fudan-pedestrian/train.py \
   --run_name finetune \
   --mlflow_address http://host.docker.internal:8081
 ```
+
+## Evaluation
+
+```bash
+python3 pytorch/object_detection/penn-fudan-pedestrian/eval.py
+```

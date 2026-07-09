@@ -3,27 +3,52 @@ from torch import Tensor, argsort
 from torchvision.ops import box_iou
 
 
-def filter_by_score(boxes: Tensor, scores: Tensor, threshold: float) -> tuple[Tensor, Tensor]:
-    """Filter boxes and scores by a confidence threshold.
+def match_predictions_to_targets_multiclass(
+        pred_boxes: Tensor,
+        pred_scores: Tensor,
+        pred_labels: Tensor,
+        gt_boxes: Tensor,
+        gt_labels: Tensor,
+        class_ids: list[int] | None,
+        score_threshold: float,
+        iou_threshold: float,
+) -> dict[int, dict[str, int]]:
+    """Match predicted boxes to ground-truth boxes separately for each class.
 
-    :param boxes: Predicted bounding boxes.
-    :param scores: Confidence scores for the predicted boxes.
-    :param threshold: Minimum score required to keep a prediction.
-    :return: Filtered bounding boxes and their corresponding scores.
+    For each class ID, the function filters predicted and ground-truth boxes
+    belonging to that class, matches them using the given score and IoU
+    thresholds, and returns TP, FP, and FN counts.
+
+    :param pred_boxes: Predicted bounding boxes.
+    :param pred_scores: Confidence scores for the predicted boxes.
+    :param pred_labels: Class labels for the predicted boxes.
+    :param gt_boxes: Ground-truth bounding boxes.
+    :param gt_labels: Class labels for the ground-truth boxes.
+    :param class_ids: Class IDs to evaluate.
+    :param score_threshold: Minimum confidence score required to keep a prediction.
+    :param iou_threshold: Minimum IoU required to match a prediction with a target.
+    :return: Per-class matching results with TP, FP, and FN counts.
     """
-    mask = scores >= threshold
-    return boxes[mask], scores[mask]
+    results = {}
+    for class_id in class_ids:
+        pred_mask = pred_labels == class_id
+        gt_mask = gt_labels == class_id
 
+        tp, fp, fn = match_predictions_to_targets(
+            pred_boxes=pred_boxes[pred_mask],
+            pred_scores=pred_scores[pred_mask],
+            gt_boxes=gt_boxes[gt_mask],
+            score_threshold=score_threshold,
+            iou_threshold=iou_threshold,
+        )
 
-def sort_by_score(boxes: Tensor, scores: Tensor) -> tuple[Tensor, Tensor]:
-    """Sort boxes and scores by descending confidence score.
+        results[class_id] = {
+            "tp": tp,
+            "fp": fp,
+            "fn": fn,
+        }
 
-    :param boxes: Predicted bounding boxes.
-    :param scores: Confidence scores for the predicted boxes.
-    :return: Bounding boxes and scores sorted by score in descending order.
-    """
-    scores_indices = argsort(scores, descending=True)
-    return boxes[scores_indices], scores[scores_indices]
+    return results
 
 
 def match_predictions_to_targets(
@@ -76,6 +101,29 @@ def match_predictions_to_targets(
     fn = len(gt_boxes) - matched_gts.sum().item()
 
     return tp, fp, fn
+
+
+def filter_by_score(boxes: Tensor, scores: Tensor, threshold: float) -> tuple[Tensor, Tensor]:
+    """Filter boxes and scores by a confidence threshold.
+
+    :param boxes: Predicted bounding boxes.
+    :param scores: Confidence scores for the predicted boxes.
+    :param threshold: Minimum score required to keep a prediction.
+    :return: Filtered bounding boxes and their corresponding scores.
+    """
+    mask = scores >= threshold
+    return boxes[mask], scores[mask]
+
+
+def sort_by_score(boxes: Tensor, scores: Tensor) -> tuple[Tensor, Tensor]:
+    """Sort boxes and scores by descending confidence score.
+
+    :param boxes: Predicted bounding boxes.
+    :param scores: Confidence scores for the predicted boxes.
+    :return: Bounding boxes and scores sorted by score in descending order.
+    """
+    scores_indices = argsort(scores, descending=True)
+    return boxes[scores_indices], scores[scores_indices]
 
 
 def precision(tp: int, fp: int) -> float:
