@@ -14,7 +14,7 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from tqdm import tqdm
 
 from src.dataset.penn_fudan import PennFudanDataset
-from src.evaluation.single_class import f1, match_predictions_to_targets, precision, recall
+from src.evaluation.manual.detection_metrics import f1, match_predictions_to_targets, precision, recall
 from src.transforms import get_transform
 from src.utils import collate_fn
 
@@ -277,20 +277,9 @@ def main():
     n_train = int(len(dataset) * 0.8)
     n_val = len(dataset) - n_train
 
-    train_subset, val_subset = random_split(
-        dataset,
-        (n_train, n_val),
-        generator=Generator().manual_seed(42),
-    )
-
-    train_dataset = PennFudanDataset(
-        root=args.data_root,
-        transforms=get_transform(train=True),
-    )
-    val_dataset = PennFudanDataset(
-        root=args.data_root,
-        transforms=get_transform(train=False),
-    )
+    train_subset, val_subset = random_split(dataset, (n_train, n_val), generator=Generator().manual_seed(42))
+    train_dataset = PennFudanDataset(root=args.data_root, transforms=get_transform(train=True))
+    val_dataset = PennFudanDataset(root=args.data_root, transforms=get_transform(train=False))
 
     trainset = Subset(train_dataset, train_subset.indices)
     valset = Subset(val_dataset, val_subset.indices)

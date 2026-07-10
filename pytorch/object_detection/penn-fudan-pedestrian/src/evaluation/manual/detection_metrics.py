@@ -3,52 +3,72 @@ from torch import Tensor, argsort
 from torchvision.ops import box_iou
 
 
-def match_predictions_to_targets_multiclass(
-        pred_boxes: Tensor,
-        pred_scores: Tensor,
-        pred_labels: Tensor,
-        gt_boxes: Tensor,
-        gt_labels: Tensor,
-        class_ids: list[int] | None,
+def count_matches(
+        evaluation_data: list[dict[str, Tensor]],
+        class_ids: list[int],
         score_threshold: float,
         iou_threshold: float,
 ) -> dict[int, dict[str, int]]:
-    """Match predicted boxes to ground-truth boxes separately for each class.
+    """Count TP, FP, and FN for each class across the evaluation dataset.
 
-    For each class ID, the function filters predicted and ground-truth boxes
-    belonging to that class, matches them using the given score and IoU
-    thresholds, and returns TP, FP, and FN counts.
-
-    :param pred_boxes: Predicted bounding boxes.
-    :param pred_scores: Confidence scores for the predicted boxes.
-    :param pred_labels: Class labels for the predicted boxes.
-    :param gt_boxes: Ground-truth bounding boxes.
-    :param gt_labels: Class labels for the ground-truth boxes.
-    :param class_ids: Class IDs to evaluate.
+    :param evaluation_data: Per-image predictions and ground-truth annotations.
+    :param class_ids: Foreground class IDs to evaluate.
     :param score_threshold: Minimum confidence score required to keep a prediction.
     :param iou_threshold: Minimum IoU required to match a prediction with a target.
-    :return: Per-class matching results with TP, FP, and FN counts.
+    :return: Per-class TP, FP, and FN counts.
     """
-    results = {}
-    for class_id in class_ids:
-        pred_mask = pred_labels == class_id
-        gt_mask = gt_labels == class_id
+    matches_count: dict[int, dict[str, int]] = {
+        class_id: {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+        }
+        for class_id in class_ids
+    }
 
-        tp, fp, fn = match_predictions_to_targets(
-            pred_boxes=pred_boxes[pred_mask],
-            pred_scores=pred_scores[pred_mask],
-            gt_boxes=gt_boxes[gt_mask],
-            score_threshold=score_threshold,
-            iou_threshold=iou_threshold,
-        )
+    for sample in evaluation_data:
+        for class_id in class_ids:
+            pred_mask = sample["pred_labels"] == class_id
+            gt_mask = sample["gt_labels"] == class_id
 
-        results[class_id] = {
-            "tp": tp,
-            "fp": fp,
-            "fn": fn,
+            tp, fp, fn = match_predictions_to_targets(
+                pred_boxes=sample["pred_boxes"][pred_mask],
+                pred_scores=sample["pred_scores"][pred_mask],
+                gt_boxes=sample["gt_boxes"][gt_mask],
+                score_threshold=score_threshold,
+                iou_threshold=iou_threshold,
+            )
+
+            matches_count[class_id]["tp"] += tp
+            matches_count[class_id]["fp"] += fp
+            matches_count[class_id]["fn"] += fn
+
+    return matches_count
+
+
+def calculate_metrics(matches_count: dict[int, dict[str, int]]) -> dict[int, dict[str, float]]:
+    """Calculate precision, recall, and F1 score for each class.
+
+    :param matches_count: Per-class TP, FP, and FN counts.
+    :return: Per-class precision, recall, and F1 score values.
+    """
+    metrics: dict[int, dict[str, float]] = {}
+
+    for class_id, counts in matches_count.items():
+        tp = counts["tp"]
+        fp = counts["fp"]
+        fn = counts["fn"]
+
+        precision_value = precision(tp, fp)
+        recall_value = recall(tp, fn)
+
+        metrics[class_id] = {
+            "precision": precision_value,
+            "recall": recall_value,
+            "f1": f1(precision_value, recall_value),
         }
 
-    return results
+    return metrics
 
 
 def match_predictions_to_targets(

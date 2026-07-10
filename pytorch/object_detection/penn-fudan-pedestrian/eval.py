@@ -10,7 +10,7 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from tqdm import tqdm
 
 from src.dataset.penn_fudan import PennFudanDataset
-from src.evaluation.manual_detection_metrics import match_predictions_to_targets_multiclass, precision, recall, f1
+from src.evaluation.manual.detection_metrics import count_matches, calculate_metrics
 from src.transforms import get_transform
 from src.utils import collate_fn
 
@@ -25,7 +25,7 @@ def parse_args() -> Namespace:
     parser.add_argument("--load_model_path", type=str, required=True)
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--num_workers", type=int, default=4)
-    parser.add_argument("--score_threshold", type=float, default=0.9)
+    parser.add_argument("--score_threshold", type=float, default=0.85)
     parser.add_argument("--iou_threshold", type=float, default=0.5)
     return parser.parse_args()
 
@@ -50,80 +50,36 @@ def build_model(num_classes: int, checkpoint_path: str, device: torch.device) ->
     return model
 
 
-def evaluate(
+def collect_evaluation_data(
         model: Module,
         dataloader: DataLoader,
-        class_ids: list[int],
         device: torch.device,
-        score_threshold: float,
-        iou_threshold: float
-) -> dict[int, dict[str, float]]:
-    """Evaluate a detection model and accumulate TP, FP, and FN.
+) -> list[dict[str, torch.Tensor]]:
+    """Run model inference and collect predictions and targets.
 
     :param model: Detection model to evaluate.
-    :param dataloader: DataLoader with validation or test samples.
-    :param class_ids: Class IDs list for hte model.
+    :param dataloader: DataLoader with evaluation samples.
     :param device: Device used for model inference.
-    :param score_threshold: Minimum confidence score required to keep a prediction.
-    :param iou_threshold: Minimum IoU required to match a prediction to a ground-truth box.
-    :return: Total numbers of true positives, false positives, and false negatives.
+    :return: Per-image predictions and ground-truth annotations.
     """
     model.eval()
 
-    matches_count: dict[int, dict[str, int]] = {
-        class_id: {"tp": 0, "fp": 0, "fn": 0}
-        for class_id in class_ids
-    }
+    evaluation_data: list[dict[str, torch.Tensor]] = []
     with torch.inference_mode():
-        for inputs, targets in dataloader:
-            inputs = [image.to(device) for image in inputs]
+        for images, targets in tqdm(dataloader, desc="Collecting evaluation data"):
+            images = [image.to(device) for image in images]
+            outputs = model(images)
 
-            outputs = model(inputs)
+            for output, target in zip(outputs, targets):
+                evaluation_data.append({
+                    "pred_boxes": output["boxes"].detach().cpu(),
+                    "pred_scores": output["scores"].detach().cpu(),
+                    "pred_labels": output["labels"].detach().cpu(),
+                    "gt_boxes": target["boxes"].detach().cpu(),
+                    "gt_labels": target["labels"].detach().cpu(),
+                })
 
-            for target, output in zip(targets, outputs):
-                matches = match_predictions_to_targets_multiclass(
-                    pred_boxes=output["boxes"].detach().cpu(),
-                    pred_scores=output["scores"].detach().cpu(),
-                    pred_labels=output["labels"].detach().cpu(),
-                    gt_labels=target["labels"].detach().cpu(),
-                    gt_boxes=target["boxes"].detach().cpu(),
-                    class_ids=class_ids,
-                    score_threshold=score_threshold,
-                    iou_threshold=iou_threshold,
-                )
-
-                for class_id in class_ids:
-                    matches_count[class_id]["tp"] += matches[class_id]["tp"]
-                    matches_count[class_id]["fp"] += matches[class_id]["fp"]
-                    matches_count[class_id]["fn"] += matches[class_id]["fn"]
-
-    return calculate_metrics(matches_count, class_ids)
-
-
-def calculate_metrics(matches_count: dict[int, dict[str, int]], class_ids: list[int]) -> dict[int, dict[str, float]]:
-    """Calculate detection metrics for each class.
-
-    For each class ID, the function reads TP, FP, and FN counts and calculates
-    precision, recall, and F1 score.
-
-    :param matches_count: Per-class matching results with TP, FP, and FN counts.
-    :param class_ids: Class IDs to calculate metrics for.
-    :return: Per-class precision, recall, and F1 score values.
-    """
-    metrics: dict[int, dict[str, float]] = {
-        class_id: {"precision": 0.0, "recall": 0.0, "f1": 0.0}
-        for class_id in class_ids
-    }
-    for class_id in class_ids:
-        tp = matches_count[class_id]["tp"]
-        fp = matches_count[class_id]["fp"]
-        fn = matches_count[class_id]["fn"]
-
-        metrics[class_id]["precision"] = precision(tp, fp)
-        metrics[class_id]["recall"] = recall(tp, fn)
-        metrics[class_id]["f1"] = f1(metrics[class_id]["precision"], metrics[class_id]["recall"])
-
-    return metrics
+    return evaluation_data
 
 
 def get_class_ids_from_model(model: Module) -> list[int]:
@@ -152,7 +108,7 @@ def main():
     val_dataset = PennFudanDataset(root=args.data_root, transforms=get_transform(train=False))
     valset = Subset(val_dataset, val_subset.indices)
 
-    valloader = DataLoader(
+    dataloader = DataLoader(
         valset,
         batch_size=args.batch_size,
         shuffle=False,
@@ -160,27 +116,28 @@ def main():
         collate_fn=collate_fn,
     )
 
-    tqdm.write(f"Test dataset size: {len(valset)}")
+    tqdm.write(f"Eval dataset size: {len(valset)}")
 
     model = build_model(num_classes=2, checkpoint_path=args.load_model_path, device=device)
     class_ids = get_class_ids_from_model(model)
 
-    metrics = evaluate(
-        model=model,
-        dataloader=valloader,
+    evaluation_data = collect_evaluation_data(model=model, dataloader=dataloader, device=device)
+
+    matches_count = count_matches(
+        evaluation_data=evaluation_data,
         class_ids=class_ids,
-        device=device,
         score_threshold=args.score_threshold,
-        iou_threshold=args.iou_threshold
+        iou_threshold=args.iou_threshold,
     )
+    metrics = calculate_metrics(matches_count)
 
-    for class_id in class_ids:
+    for class_id, metrics_dict in metrics.items():
         tqdm.write(f"{class_id}, "
-                   f"Precision: {metrics[class_id]['precision']:.3f}, "
-                   f"Recall: {metrics[class_id]['recall']:.3f}, "
-                   f"F1: {metrics[class_id]['f1']:.3f}")
+                   f"Precision: {metrics_dict['precision']:.3f}, "
+                   f"Recall: {metrics_dict['recall']:.3f}, "
+                   f"F1: {metrics_dict['f1']:.3f}")
 
-    tqdm.write("Finished Testing")
+    tqdm.write("Evaluating finished")
 
 
 if __name__ == "__main__":
