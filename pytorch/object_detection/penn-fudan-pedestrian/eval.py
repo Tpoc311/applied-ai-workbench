@@ -1,4 +1,5 @@
 from argparse import ArgumentParser, Namespace
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -11,6 +12,13 @@ from tqdm import tqdm
 
 from src.dataset.penn_fudan import PennFudanDataset
 from src.evaluation.manual.detection_metrics import count_matches, calculate_metrics
+from src.evaluation.manual.ranking_metrics import (
+    build_ranked_matches,
+    calculate_pr_curves,
+    calculate_average_precisions,
+    calculate_map,
+)
+from src.evaluation.manual.report import save_pr_curves
 from src.transforms import get_transform
 from src.utils import collate_fn
 
@@ -41,6 +49,7 @@ def build_model(num_classes: int, checkpoint_path: str, device: torch.device) ->
     model = fasterrcnn_resnet50_fpn(weights=None, weights_backbone=None)
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+    model.roi_heads.score_thresh = 0.001
 
     checkpoint: dict[str, Any] = torch.load(checkpoint_path, map_location=device)
     state_dict = checkpoint["model_state_dict"]
@@ -131,12 +140,32 @@ def main():
     )
     metrics = calculate_metrics(matches_count)
 
-    for class_id, metrics_dict in metrics.items():
-        tqdm.write(f"{class_id}, "
-                   f"Precision: {metrics_dict['precision']:.3f}, "
-                   f"Recall: {metrics_dict['recall']:.3f}, "
-                   f"F1: {metrics_dict['f1']:.3f}")
+    ranked_matches = build_ranked_matches(
+        evaluation_data=evaluation_data,
+        class_ids=class_ids,
+        iou_threshold=args.iou_threshold,
+    )
 
+    pr_curves = calculate_pr_curves(ranked_matches)
+    average_precisions = calculate_average_precisions(pr_curves)
+    map_value = calculate_map(average_precisions)
+
+    save_pr_curves(
+        pr_curves=pr_curves,
+        average_precisions=average_precisions,
+        output_dir=Path("pr_curves"),
+        iou_threshold=args.iou_threshold,
+    )
+
+    for class_id, metrics_dict in metrics.items():
+        tqdm.write(
+            f"Class: {class_id}, "
+            f"Precision: {metrics_dict['precision']:.3f}, "
+            f"Recall: {metrics_dict['recall']:.3f}, "
+            f"F1: {metrics_dict['f1']:.3f}, "
+            f"AP@IoU={args.iou_threshold:.2f}: {average_precisions[class_id]:.4f}"
+        )
+    tqdm.write(f"mAP@IoU={args.iou_threshold:.2f}: {map_value:.4f}")
     tqdm.write("Evaluating finished")
 
 
