@@ -33,7 +33,7 @@ def parse_args() -> Namespace:
     parser.add_argument("--load_model_path", type=str, required=True)
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--num_workers", type=int, default=4)
-    parser.add_argument("--score_threshold", type=float, default=0.85)
+    parser.add_argument("--score_threshold", type=float, default=0.9)
     parser.add_argument("--iou_threshold", type=float, default=0.5)
     return parser.parse_args()
 
@@ -49,7 +49,7 @@ def build_model(num_classes: int, checkpoint_path: str, device: torch.device) ->
     model = fasterrcnn_resnet50_fpn(weights=None, weights_backbone=None)
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-    model.roi_heads.score_thresh = 0.001
+    model.roi_heads.score_thresh = 0.0001
 
     checkpoint: dict[str, Any] = torch.load(checkpoint_path, map_location=device)
     state_dict = checkpoint["model_state_dict"]
