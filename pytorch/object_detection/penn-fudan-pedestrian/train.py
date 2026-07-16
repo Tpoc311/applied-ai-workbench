@@ -13,8 +13,15 @@ from torchvision.models.detection import fasterrcnn_resnet50_fpn, FasterRCNN_Res
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from tqdm import tqdm
 
+from eval import get_class_ids_from_model, collect_evaluation_data
 from src.dataset.penn_fudan import PennFudanDataset
-from src.evaluation.manual.detection_metrics import f1, match_predictions_to_targets, precision, recall
+from src.evaluation.manual.detection_metrics import count_matches, calculate_metrics
+from src.evaluation.manual.ranking_metrics import (
+    build_ranked_matches,
+    calculate_pr_curves,
+    calculate_average_precisions,
+    calculate_map,
+)
 from src.transforms import get_transform
 from src.utils import collate_fn
 
@@ -65,6 +72,7 @@ def build_model(num_classes: int, use_pretrained_weights: bool) -> Module:
 
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+    model.roi_heads.score_thresh = 0.0001
 
     return model
 
@@ -118,10 +126,10 @@ def train_loop(
     )
 
     for i, data in pbar:
+        optimizer.zero_grad()
+
         images = [image.to(device) for image in data[0]]
         targets = move_targets_to_device(data[1], device)
-
-        optimizer.zero_grad(set_to_none=True)
 
         loss_dict = model(images, targets)
         total_loss = sum(loss for loss in loss_dict.values())
@@ -152,76 +160,44 @@ def train_loop(
     return losses
 
 
-def val_loop(
-        dataloader: DataLoader,
+def evaluate(
         model: Module,
-        device: torch.device,
-        epoch: int,
+        dataloader: DataLoader,
+        device,
+        class_ids: list[int],
         score_threshold: float,
         iou_threshold: float,
-) -> dict[str, float]:
-    """Run one validation epoch and return detection metrics.
+) -> tuple[dict[int, dict[str, float]], dict[int, float], float]:
+    """Evaluate a detection model using fixed-threshold and ranking metrics.
 
-    The model is evaluated without gradient tracking. Predictions are matched to
-    ground-truth boxes using the provided score and IoU thresholds.
-
-    :param dataloader: DataLoader with validation samples.
     :param model: Detection model to evaluate.
-    :param device: Device used for inference.
-    :param epoch: Current epoch number.
-    :param score_threshold: Minimum confidence score required to keep a prediction.
-    :param iou_threshold: Minimum IoU required to match a prediction to a ground-truth box.
-    :return: Precision, recall, and F1 score computed over the full validation split.
+    :param dataloader: DataLoader with validation samples.
+    :param device: Device used for model inference.
+    :param class_ids: Foreground class IDs.
+    :param score_threshold: Score threshold used for precision, recall, and F1.
+    :param iou_threshold: IoU threshold used for prediction matching.
+    :return: Fixed-threshold metrics, per-class AP values, and mAP.
     """
-    model.eval()
+    evaluation_data = collect_evaluation_data(model, dataloader, device)
 
-    total_tp, total_fp, total_fn = 0, 0, 0
+    matches_count = count_matches(
+        evaluation_data=evaluation_data,
+        class_ids=class_ids,
+        score_threshold=score_threshold,
+        iou_threshold=iou_threshold,
+    )
+    metrics = calculate_metrics(matches_count)
 
-    val_metrics = {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-    }
-
-    pbar = tqdm(
-        enumerate(dataloader, start=1),
-        total=len(dataloader),
-        desc=f"Validation epoch {epoch}",
+    ranked_matches = build_ranked_matches(
+        evaluation_data=evaluation_data,
+        class_ids=class_ids,
+        iou_threshold=iou_threshold,
     )
 
-    with torch.inference_mode():
-        for _, data in pbar:
-            images = [image.to(device) for image in data[0]]
-            targets = move_targets_to_device(data[1], device)
+    average_precisions = calculate_average_precisions(calculate_pr_curves(ranked_matches))
+    map_value = calculate_map(average_precisions)
 
-            preds = model(images)
-
-            for pred, target in zip(preds, targets):
-                tp, fp, fn = match_predictions_to_targets(
-                    pred_boxes=pred["boxes"],
-                    pred_scores=pred["scores"],
-                    gt_boxes=target["boxes"],
-                    iou_threshold=iou_threshold,
-                    score_threshold=score_threshold,
-                )
-
-                total_tp += tp
-                total_fp += fp
-                total_fn += fn
-
-            val_metrics["precision"] = precision(total_tp, total_fp)
-            val_metrics["recall"] = recall(total_tp, total_fn)
-            val_metrics["f1"] = f1(val_metrics["precision"], val_metrics["recall"])
-
-            pbar.set_postfix(
-                {
-                    "Precision": f"{val_metrics["precision"]:.3f}",
-                    "Recall": f"{val_metrics["recall"]:.3f}",
-                    "F1": f"{val_metrics["f1"]:.3f}",
-                }
-            )
-
-    return val_metrics
+    return metrics, average_precisions, map_value
 
 
 def save_checkpoint(
@@ -230,7 +206,7 @@ def save_checkpoint(
         optimizer: Optimizer,
         scheduler: StepLR,
         epoch: int,
-        best_val_f1: float,
+        best_val_ap50: float,
 ) -> None:
     """Save a checkpoint that can be used to resume training.
 
@@ -239,11 +215,11 @@ def save_checkpoint(
     :param optimizer: Optimizer whose state should be saved.
     :param scheduler: Scheduler whose state should be saved.
     :param epoch: Last completed epoch number.
-    :param best_val_f1: Best validation F1 score observed so far.
+    :param best_val_ap50: Best validation AP@50 score observed so far.
     """
     checkpoint = {
         "epoch": epoch,
-        "best_val_f1": best_val_f1,
+        "best_val_ap50": best_val_ap50,
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
         "scheduler_state_dict": scheduler.state_dict(),
@@ -302,13 +278,14 @@ def main():
     )
     tqdm.write(f"Val dataset size: {len(valset)}")
 
-    net = build_model(
+    model = build_model(
         num_classes=2,
         use_pretrained_weights=args.resume_from is None,
     )
-    net.to(device)
+    model.to(device)
+    class_ids = get_class_ids_from_model(model)
 
-    params = [p for p in net.parameters() if p.requires_grad]
+    params = [p for p in model.parameters() if p.requires_grad]
     optimizer = SGD(
         params,
         lr=args.lr,
@@ -322,33 +299,27 @@ def main():
     )
 
     start_epoch = 1
-    best_val_f1 = -float("inf")
+    best_val_ap50 = -float("inf")
 
     if args.resume_from is not None:
         checkpoint: dict[str, Any] = torch.load(args.resume_from, map_location=device)
 
-        net.load_state_dict(checkpoint["model_state_dict"])
+        model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
 
         start_epoch = checkpoint["epoch"] + 1
-        best_val_f1 = checkpoint.get("best_val_f1", best_val_f1)
+        best_val_ap50 = checkpoint.get("best_val_ap50", best_val_ap50)
 
         tqdm.write(
             f"Resumed from {args.resume_from}: "
             f"last_epoch={checkpoint["epoch"]}, "
             f"start_epoch={start_epoch}, "
-            f"best_val_f1={best_val_f1:.4f}"
+            f"best_val_ap50={best_val_ap50:.4f}"
         )
 
-    best_model_name = (
-        f"{args.run_name.lower()}_penn_fudan_best_"
-        f"batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
-    )
-    last_model_name = (
-        f"{args.run_name.lower()}_penn_fudan_last_"
-        f"batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
-    )
+    best_model_name = (f"{model._get_name()}-{args.run_name.lower()}_penn_fudan_best.pt")
+    last_model_name = (f"{model._get_name()}-{args.run_name.lower()}_penn_fudan_last.pt")
 
     with mlflow.start_run(run_name=args.run_name):
         mlflow.log_params(mlflow_params)
@@ -356,53 +327,56 @@ def main():
         for epoch in range(start_epoch, args.epochs + 1):
             train_losses = train_loop(
                 dataloader=trainloader,
-                model=net,
+                model=model,
                 optimizer=optimizer,
                 device=device,
                 epoch=epoch,
             )
-            val_metrics = val_loop(
+            metrics, average_precisions, mean_average_precisions = evaluate(
                 dataloader=valloader,
-                model=net,
+                model=model,
                 device=device,
-                epoch=epoch,
+                class_ids=class_ids,
                 score_threshold=args.score_threshold,
                 iou_threshold=args.iou_threshold,
             )
 
             current_lr = optimizer.param_groups[0]["lr"]
 
+            person_metrics = metrics[1]
             mlflow.log_metrics(
                 {
-                    "train_loss_classifier": train_losses["loss_classifier"],
-                    "train_loss_box_reg": train_losses["loss_box_reg"],
+                    "lr": current_lr,
                     "train_loss_objectness": train_losses["loss_objectness"],
                     "train_loss_rpn_box_reg": train_losses["loss_rpn_box_reg"],
+                    "train_loss_classifier": train_losses["loss_classifier"],
+                    "train_loss_box_reg": train_losses["loss_box_reg"],
                     "train_total_loss": train_losses["total_loss"],
-                    "precision": val_metrics["precision"],
-                    "recall": val_metrics["recall"],
-                    "f1": val_metrics["f1"],
-                    "lr": current_lr,
+                    "val_precision": person_metrics["precision"],
+                    "val_recall": person_metrics["recall"],
+                    "val_f1": person_metrics["f1"],
+                    "val_ap50": average_precisions[1],
+                    "val_map50": mean_average_precisions,
                 },
                 step=epoch,
             )
 
             scheduler.step()
 
-            current_val_f1 = val_metrics["f1"]
-            is_best = current_val_f1 > best_val_f1
+            current_val_ap50 = average_precisions[1]
+            is_best = current_val_ap50 > best_val_ap50
 
             if is_best:
-                best_val_f1 = current_val_f1
+                best_val_ap50 = current_val_ap50
 
             last_model_path = join(args.save_model_path, last_model_name)
             save_checkpoint(
                 path=last_model_path,
-                model=net,
+                model=model,
                 optimizer=optimizer,
                 scheduler=scheduler,
                 epoch=epoch,
-                best_val_f1=best_val_f1,
+                best_val_ap50=best_val_ap50,
             )
             mlflow.log_artifact(last_model_path)
 
@@ -410,15 +384,15 @@ def main():
                 best_model_path = join(args.save_model_path, best_model_name)
                 save_checkpoint(
                     path=best_model_path,
-                    model=net,
+                    model=model,
                     optimizer=optimizer,
                     scheduler=scheduler,
                     epoch=epoch,
-                    best_val_f1=best_val_f1,
+                    best_val_ap50=best_val_ap50,
                 )
                 mlflow.log_artifact(best_model_path)
 
-                tqdm.write(f"New best model: epoch={epoch}, best_val_f1={best_val_f1:.4f}")
+                tqdm.write(f"New best model: epoch={epoch}, best_val_ap50={best_val_ap50:.4f}")
 
     tqdm.write("Finished Training")
 
