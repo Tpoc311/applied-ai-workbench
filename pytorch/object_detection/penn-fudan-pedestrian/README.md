@@ -61,7 +61,29 @@ I also refreshed and manually implemented TP, FP, FN, precision, recall, F1, PR 
 
 ### Faster R-CNN
 
-**TODO** Add training graphics, a couple of words about training result and training time info.
+<p align="center"> 
+    <img src="images/train_total_loss.png" width="40%">
+    <img src="images/val_map50.png" width="40%">
+</p>
+
+The training loss decreased rapidly during the first epochs and then stabilized around 0.09. At the same time,
+validation mAP50 quickly reached approximately 0.989 and remained stable, indicating fast convergence of the pretrained
+Faster R-CNN on Penn-Fudan.
+
+Since the dataset contains only one foreground class, person, mAP50 is equal to AP50 in this experiment.
+
+<p align="center"> 
+    <img src="images/precision.png" width="32%">
+    <img src="images/recall.png" width="32%">
+    <img src="images/f1.png" width="32%">
+</p>
+
+At a score threshold of 0.5, recall reached 1.0, while precision stabilized around 0.82 and F1 around 0.90. This
+indicates that the model detects nearly all pedestrians, while most remaining errors are false-positive detections.
+
+Overall, the model converged quickly and achieved strong validation results. However, Penn-Fudan is a small dataset,
+so the experiment primarily demonstrates successful fine-tuning and manual implementation of object detection metrics
+rather than robust real-world performance.
 
 ### Evaluating
 
