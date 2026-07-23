@@ -1,5 +1,6 @@
 from argparse import ArgumentParser, Namespace
 from os.path import join
+from contextlib import nullcontext
 
 import mlflow
 import torch
@@ -30,7 +31,7 @@ def parse_args() -> Namespace:
     parser.add_argument("--lr", type=float, default=0.01)
     parser.add_argument("--momentum", type=float, default=0.9)
     parser.add_argument("--weight_decay", type=float, default=0.0005)
-    parser.add_argument("--mlflow_address", type=str, default="http://host.docker.internal:8081")
+    parser.add_argument("--mlflow_address", type=str, default=None)
     parser.add_argument("--experiment_name", type=str, default="ImageNet1000")
     parser.add_argument("--resume_from", type=str, default=None)
     return parser.parse_args()
@@ -149,9 +150,9 @@ def main():
     checkpoints after each epoch.
     """
     args = parse_args()
+    use_mlflow = args.mlflow_address is not None
 
     # MLflow setup
-    mlflow.set_tracking_uri(args.mlflow_address)
     mlflow_params = {
         "batch_size": args.batch_size,
         "epochs": args.epochs,
@@ -159,6 +160,9 @@ def main():
         "momentum": args.momentum,
         "weight_decay": args.weight_decay,
     }
+    if use_mlflow:
+        mlflow.set_tracking_uri(args.mlflow_address)
+        mlflow.set_experiment(args.experiment_name)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     tqdm.write(f"Device: {device}")
@@ -201,9 +205,10 @@ def main():
             f"best_val_top1_acc={best_val_top1_acc:.4f}"
         )
 
-    mlflow.set_experiment(args.experiment_name)
-    with mlflow.start_run(run_name=args.model):
-        mlflow.log_params(mlflow_params)
+    run_context = mlflow.start_run(run_name=args.model) if use_mlflow else nullcontext()
+    with run_context:
+        if use_mlflow:
+            mlflow.log_params(mlflow_params)
         best_model_name = f"{args.model.lower()}_imagenet1000_best_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
         last_model_name = f"{args.model.lower()}_imagenet1000_last_batch{args.batch_size}_lr{args.lr}_momentum{args.momentum}.pt"
         for epoch in range(start_epoch, args.epochs + 1):
@@ -213,19 +218,6 @@ def main():
 
             scheduler.step()
             current_lr = optimizer.param_groups[0]["lr"]
-
-            mlflow.log_metrics(
-                {
-                    "train_loss": train_loss,
-                    "train_top1_acc": train_top1_acc,
-                    "train_top5_acc": train_top5_acc,
-                    "val_loss": val_loss,
-                    "val_top1_acc": val_top1_acc,
-                    "val_top5_acc": val_top5_acc,
-                    "lr": current_lr,
-                },
-                step=epoch,
-            )
 
             last_model_path = join(args.save_model_path, last_model_name)
             is_best = val_top1_acc > best_val_top1_acc
@@ -241,7 +233,21 @@ def main():
                 epoch=epoch,
                 best_val_top1_acc=best_val_top1_acc,
             )
-            mlflow.log_artifact(last_model_path)
+
+            if use_mlflow:
+                mlflow.log_metrics(
+                    {
+                        "train_loss": train_loss,
+                        "train_top1_acc": train_top1_acc,
+                        "train_top5_acc": train_top5_acc,
+                        "val_loss": val_loss,
+                        "val_top1_acc": val_top1_acc,
+                        "val_top5_acc": val_top5_acc,
+                        "lr": current_lr,
+                    },
+                    step=epoch,
+                )
+                mlflow.log_artifact(last_model_path)
 
             if is_best:
                 best_model_path = join(args.save_model_path, best_model_name)
@@ -253,7 +259,8 @@ def main():
                     epoch=epoch,
                     best_val_top1_acc=best_val_top1_acc,
                 )
-                mlflow.log_artifact(best_model_path)
+                if use_mlflow:
+                    mlflow.log_artifact(best_model_path)
 
                 tqdm.write(f"New best model: epoch={epoch}, val_top1_acc={val_top1_acc:.4f}")
     tqdm.write(f"Finished Training")

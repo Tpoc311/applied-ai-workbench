@@ -15,6 +15,7 @@ pytorch/
 ## Available tasks
 
 * [Image classification](./image_classification)
+* [Object detection](./object_detection)
 
 More tasks will be added later as the workspace grows.
 
