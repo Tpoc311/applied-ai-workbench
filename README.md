@@ -24,16 +24,19 @@ The repository may include work related to:
 
 ```text
 .
-├── artifacts/  # large files, trained models, logs, and experiment-related assets
-├── docs/       # supplementary documentation, notes, and setup-related materials
-├── pytorch/    # PyTorch workspace with CV tasks and experiments
-└── README.md   # repository overview
+├── artifacts/       # large files, trained models, logs, and experiment-related assets
+├── ml_fundamentals/ # fundamental ML concepts and implementations
+├── docs/            # supplementary documentation, notes, and setup-related materials
+├── pytorch/         # PyTorch workspace with CV tasks and experiments
+└── README.md        # repository overview
 ```
 
 ## Where to start
 
 The repository is organized into task-oriented workspaces. Currently, the main active workspace is:
 
+* [ML Fundamentals](./ml_fundamentals) — Fundamental machine learning concepts explored from mathematical formulation
+  to practical implementations.
 - [PyTorch workspace](./pytorch) — Docker-based environment and practical PyTorch implementations for computer vision
   tasks.
 
