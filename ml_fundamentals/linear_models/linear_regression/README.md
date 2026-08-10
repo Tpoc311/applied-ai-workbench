@@ -15,7 +15,7 @@ Understand linear regression at several levels of abstraction:
 * Implement linear regression using gradient descent with NumPy.
 * Compare the implementations with `sklearn.linear_model.LinearRegression`.
 * Implement the same model with PyTorch using automatic differentiation and an optimizer.
-* Compare model parameters, predictions, and evaluation metrics across implementations.
+* Compare model parameters and evaluation metrics across implementations.
 
 ## Implementations
 
@@ -41,5 +41,13 @@ and executed in [`linear_regression.ipynb`](./linear_regression.ipynb).
 * [x] Visualize true vs predicted values on the test set.
 * [x] Train the same model with scikit-learn.
 * [x] Train the same model with PyTorch and autograd.
-* [x] Compare learned parameters, predictions, and evaluation metrics.
+* [x] Compare learned parameters and evaluation metrics across implementations.
 * [x] Write conclusions about the differences between the approaches.
+
+## Full Experiment
+
+For the complete step-by-step walkthrough, see [`linear_regression.ipynb`](./linear_regression.ipynb).
+
+The notebook includes exploratory data analysis, the mathematical derivation of linear regression and the normal
+equation, feature standardization, four model implementations, coefficient interpretation, evaluation metrics,
+prediction visualization, and final conclusions.
