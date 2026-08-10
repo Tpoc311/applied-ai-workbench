@@ -44,13 +44,11 @@ class PyTorchLinearRegression:
 
             loss.backward()
 
-            gradient = torch.cat(
-                [
-                    parameter.grad.flatten()
-                    for parameter in self.model.parameters()
-                    if parameter.grad is not None
-                ]
-            )
+            gradient = torch.cat([
+                parameter.grad.flatten()
+                for parameter in self.model.parameters()
+                if parameter.grad is not None
+            ])
 
             if torch.linalg.vector_norm(gradient) < self.eps:
                 break

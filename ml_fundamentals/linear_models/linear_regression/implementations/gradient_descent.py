@@ -16,7 +16,7 @@ class GradientDescentRegression:
 
         self.w: np.ndarray = np.zeros((in_features + 1, 1))
 
-    def fit(self, X: np.ndarray, y: np.ndarray, max_iter:int = 10000) -> np.ndarray:
+    def fit(self, X: np.ndarray, y: np.ndarray, max_iter: int = 10000) -> np.ndarray:
         """Fit the linear regression model using gradient descent.
 
         An intercept column is appended to the feature matrix. Parameters are
@@ -33,8 +33,6 @@ class GradientDescentRegression:
         ones = np.ones((X.shape[0], 1))
         X = np.hstack((X, ones))
         y = y.reshape(-1, 1)
-
-        self.w = np.zeros((X.shape[1], 1))
 
         for _ in range(max_iter):
             gradient = self._gradient(X, y)
