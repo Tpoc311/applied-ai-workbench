@@ -78,3 +78,15 @@ class PyTorchLinearRegression:
             y_pred = self.model(X)
 
         return y_pred.flatten().cpu().numpy()
+
+    @property
+    def w(self) -> np.ndarray:
+        """Return learned model coefficients including the intercept.
+
+        :return: Model coefficients with shape ``(n_features + 1, 1)``.
+            The last coefficient represents the intercept.
+        """
+        weights = self.model.weight.detach().flatten()
+        bias = self.model.bias.detach().flatten()
+
+        return torch.cat((weights, bias)).reshape(-1, 1).cpu().numpy()
