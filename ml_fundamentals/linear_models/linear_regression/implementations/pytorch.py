@@ -57,12 +57,7 @@ class PyTorchLinearRegression:
 
             self.optimizer.step()
 
-        w = torch.cat((
-            self.model.weight.detach().flatten(),
-            self.model.bias.detach().flatten(),
-        ))
-
-        return w.reshape(-1, 1).cpu().numpy()
+        return self.w
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """Predict target values for the given samples.
