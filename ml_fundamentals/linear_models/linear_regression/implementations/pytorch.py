@@ -20,7 +20,7 @@ class PyTorchLinearRegression:
         self.loss_fn: nn.MSELoss = nn.MSELoss()
         self.optimizer: torch.optim.SGD = torch.optim.SGD(self.model.parameters(), lr=lr)
 
-    def fit(self, X: np.ndarray, y: np.ndarray, max_iter: int = 10000) -> torch.Tensor:
+    def fit(self, X: np.ndarray, y: np.ndarray, max_iter: int = 10000) -> np.ndarray:
         """Fit the linear regression model using full-batch gradient descent.
 
         The input arrays are converted to tensors and moved to the selected
@@ -30,6 +30,8 @@ class PyTorchLinearRegression:
         :param X: Feature matrix with shape ``(n_samples, n_features)``.
         :param y: Target values with shape ``(n_samples,)``.
         :param max_iter: Maximum number of optimization iterations.
+        :return: Learned coefficients with shape ``(n_features + 1, 1)``.
+            The last coefficient represents the intercept.
         """
         self.model.train()
 
@@ -55,13 +57,12 @@ class PyTorchLinearRegression:
 
             self.optimizer.step()
 
-        # w = torch.tensor(
-        #     [
-        #         parameter.grad.flatten()
-        #         for parameter in self.model.parameters()
-        #         if parameter.grad is not None]
-        # )
-        # return w
+        w = torch.cat((
+            self.model.weight.detach().flatten(),
+            self.model.bias.detach().flatten(),
+        ))
+
+        return w.reshape(-1, 1).cpu().numpy()
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """Predict target values for the given samples.

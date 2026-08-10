@@ -8,6 +8,7 @@ class GradientDescentRegression:
     def __init__(self, in_features: int, lr: float = 1e-3, eps: float = 1e-3) -> None:
         """Initialize the gradient descent optimizer.
 
+        :param in_features: Number of input features.
         :param lr: Learning rate used for parameter updates.
         :param eps: Gradient-norm threshold used as the convergence criterion.
         """
@@ -19,10 +20,8 @@ class GradientDescentRegression:
     def fit(self, X: np.ndarray, y: np.ndarray, max_iter: int = 10000) -> np.ndarray:
         """Fit the linear regression model using gradient descent.
 
-        An intercept column is appended to the feature matrix. Parameters are
-        initialized with zeros and updated until either the gradient norm falls
-        below the convergence threshold or the maximum number of iterations is
-        reached.
+        An intercept column is appended to the feature matrix. Parameters are updated until
+        either the gradient norm falls below the convergence threshold or the maximum number of iterations is reached.
 
         :param X: Feature matrix with shape ``(n_samples, n_features)``.
         :param y: Target values with shape ``(n_samples,)``.
@@ -49,11 +48,7 @@ class GradientDescentRegression:
 
         :param X: Feature matrix with shape ``(n_samples, n_features)``.
         :return: Predicted target values with shape ``(n_samples,)``.
-        :raises RuntimeError: If the model has not been fitted yet.
         """
-        if self.w is None:
-            raise RuntimeError("The model must be fitted before prediction.")
-
         ones = np.ones((X.shape[0], 1))
         X = np.hstack((X, ones))
 
