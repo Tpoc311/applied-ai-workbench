@@ -31,15 +31,15 @@ and executed in [`linear_regression.ipynb`](./linear_regression.ipynb).
 
 ## Experiment checklist
 
-* [ ] Define the regression problem and linear model.
-* [ ] Derive the mean squared error objective.
-* [ ] Derive the normal equation solution.
-* [ ] Implement the normal equation solution with NumPy.
-* [ ] Derive gradients for model parameters.
-* [ ] Standardize input features for stable gradient-based optimization.
-* [ ] Implement gradient descent with NumPy.
-* [ ] Visualize true vs predicted values on the test set.
-* [ ] Train the same model with scikit-learn.
-* [ ] Train the same model with PyTorch and autograd.
-* [ ] Compare learned parameters, predictions, and evaluation metrics.
-* [ ] Write conclusions about the differences between the approaches.
+* [x] Define the regression problem and linear model.
+* [x] Derive the mean squared error objective.
+* [x] Derive the normal equation solution.
+* [x] Implement the normal equation solution with NumPy.
+* [x] Derive gradients for model parameters.
+* [x] Standardize input features for stable gradient-based optimization.
+* [x] Implement gradient descent with NumPy.
+* [x] Visualize true vs predicted values on the test set.
+* [x] Train the same model with scikit-learn.
+* [x] Train the same model with PyTorch and autograd.
+* [x] Compare learned parameters, predictions, and evaluation metrics.
+* [x] Write conclusions about the differences between the approaches.
