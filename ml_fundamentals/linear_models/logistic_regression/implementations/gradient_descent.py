@@ -8,12 +8,14 @@ class GradientDescentLogisticRegression:
         self.eps = eps
 
         self.w: np.ndarray = np.zeros((in_features + 1, 1), dtype=np.float32)
+        self.loss_history = []
 
     def fit(self, X: np.ndarray, y: np.ndarray, max_iter: int = 1000) -> np.ndarray:
         ones = np.ones((X.shape[0], 1), dtype=X.dtype)
         X = np.hstack((X, ones))
         y = y.reshape(-1, 1)
 
+        self.loss_history = []
         for _ in range(max_iter):
             gradient = self._gradient(X, y)
 
@@ -21,6 +23,9 @@ class GradientDescentLogisticRegression:
                 break
 
             self.w -= self.learning_rate * gradient
+
+            y_pred = self._sigmoid(X @ self.w)
+            self.loss_history.append(self.bce_loss(y, y_pred))
 
         return self.w
 
