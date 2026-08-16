@@ -2,7 +2,7 @@ import numpy as np
 from numpy.linalg import norm
 
 
-class GradientDescentRegression:
+class GradientDescentLogisticRegression:
     def __init__(self, in_features: int, lr: float = 1e-3, eps: float = 1e-3) -> None:
         self.learning_rate = lr
         self.eps = eps
