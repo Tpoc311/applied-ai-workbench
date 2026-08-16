@@ -24,7 +24,7 @@ Understand logistic regression at several levels of abstraction:
 The experiment contains three approaches to the binary classification problem:
 
 * **NumPy gradient descent** - Logistic regression with manually implemented sigmoid, analytically derived gradients,
-* and parameter updates.
+  and parameter updates.
 * **Scikit-learn** - Logistic regression using `sklearn.linear_model.LogisticRegression` with its default L2
   regularization.
 * **PyTorch** - Logistic regression using `nn.Linear`, `BCEWithLogitsLoss`, automatic differentiation, and an SGD

@@ -21,7 +21,5 @@ Linear models provide a simple setting for studying many fundamental machine lea
 
 * [Linear Regression](./linear_regression) - Linear regression implemented using the normal equation, gradient descent
   with NumPy, scikit-learn, and PyTorch.
-* [Logistic regression]() - Logistic regression implemented using the normal equation, gradient descent
-  with NumPy, scikit-learn, and PyTorch.
-
-More linear models will be added later as the section grows.
+* [Logistic Regression](./logistic_regression) - Binary logistic regression implemented using gradient descent with
+  NumPy, scikit-learn, and PyTorch.
