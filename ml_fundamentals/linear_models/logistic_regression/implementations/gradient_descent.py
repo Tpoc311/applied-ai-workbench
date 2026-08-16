@@ -31,7 +31,8 @@ class GradientDescentRegression:
         return np.ravel(self._sigmoid(X @ self.w))
 
     def _gradient(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
-        return 1 / len(X) * X.T @ (X @ self.w - y)
+        p = self._sigmoid(X @ self.w)
+        return X.T @ (p - y) / len(X)
 
     def _sigmoid(self, X: np.ndarray) -> np.ndarray:
         return 1 / (1 + np.exp(-X))
