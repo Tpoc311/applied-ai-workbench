@@ -29,6 +29,16 @@ The experiment contains four approaches to the same regression problem:
 Reusable implementations are stored in [`implementations/`](./implementations), while the full experiment is documented
 and executed in [`linear_regression.ipynb`](./linear_regression.ipynb).
 
+## Environment
+
+The experiment was developed and tested with **Python 3.14.7**. All required Python dependencies and their versions are
+listed in [`requirements.txt`](./requirements.txt):
+
+```bash
+cd ml_fundamentals/linear_models/linear_regression
+python3 -m pip install -r requirements.txt
+```
+
 ## Experiment checklist
 
 * [x] Define the regression problem and linear model.

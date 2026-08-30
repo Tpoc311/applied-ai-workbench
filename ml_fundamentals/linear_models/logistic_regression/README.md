@@ -33,6 +33,16 @@ The experiment contains three approaches to the binary classification problem:
 Reusable implementations are stored in [`implementations/`](./implementations), while the full experiment is
 documented and executed in [`logistic_regression.ipynb`](./logistic_regression.ipynb).
 
+## Environment
+
+The experiment was developed and tested with **Python 3.14.7**. All required Python dependencies and their versions are
+listed in [`requirements.txt`](./requirements.txt):
+
+```bash
+cd ml_fundamentals/linear_models/linear_regression
+python3 -m pip install -r requirements.txt
+```
+
 ## Experiment checklist
 
 * [x] Define the binary classification problem and logistic regression model.
